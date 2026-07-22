@@ -1,0 +1,277 @@
+import pytest
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+from yt_dlp.utils import DownloadError, PostProcessingError
+
+from app.config import settings
+from app.services.downloader import execute_download, is_ffmpeg_available
+from app.services.job_store import job_store
+from app.services.storage import storage_manager
+
+
+def test_is_ffmpeg_available_system_path():
+    """Test is_ffmpeg_available checking system PATH via shutil.which / get_ffmpeg_location."""
+    with patch("app.services.downloader.get_ffmpeg_location", return_value="/usr/bin/ffmpeg"):
+        assert is_ffmpeg_available() is True
+
+    with patch("app.services.downloader.get_ffmpeg_location", return_value=None):
+        assert is_ffmpeg_available(ffmpeg_location="") is False
+
+
+def test_is_ffmpeg_available_custom_location(tmp_path):
+    """Test is_ffmpeg_available with custom file or directory location."""
+    # Test directory containing ffmpeg executable
+    ffmpeg_dir = tmp_path / "bin"
+    ffmpeg_dir.mkdir()
+    ffmpeg_bin = ffmpeg_dir / "ffmpeg"
+    ffmpeg_bin.touch()
+
+    assert is_ffmpeg_available(ffmpeg_location=str(ffmpeg_dir)) is True
+    assert is_ffmpeg_available(ffmpeg_location=str(ffmpeg_bin)) is True
+
+    non_existent = tmp_path / "non_existent"
+    with patch("app.services.downloader.get_ffmpeg_location", return_value=None):
+        assert is_ffmpeg_available(ffmpeg_location=str(non_existent)) is False
+
+
+def test_video_download_format_with_ffmpeg(tmp_path):
+    """Test video format options selected when ffmpeg is present."""
+    job_id = "dl_ffmpeg_test_01"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"video bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(job_id, "https://example.com/video", "video", "1080p")
+        assert res == str(dummy_file)
+        assert "bestvideo" in captured_opts["format"]
+        assert "bestaudio" in captured_opts["format"]
+        assert captured_opts.get("merge_output_format") == "mp4"
+
+
+def test_video_download_format_without_ffmpeg_fallback(tmp_path):
+    """Test video format falls back to progressive single-file stream when ffmpeg is missing."""
+    job_id = "dl_ffmpeg_test_02"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"video bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=False), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(job_id, "https://example.com/video", "video", "1080p")
+        assert res == str(dummy_file)
+        assert captured_opts["format"] == "best[height<=1080][ext=mp4]/best[height<=1080]/best[ext=mp4]/best"
+        assert "merge_output_format" not in captured_opts
+
+
+def test_video_download_format_without_ffmpeg_no_height_fallback(tmp_path):
+    """Test fallback format when no specific quality height is specified."""
+    job_id = "dl_ffmpeg_test_03"
+    job_store.create_download_job(job_id, "job_test", "video", "best", "https://example.com/video")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"video bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=False), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(job_id, "https://example.com/video", "video", "best")
+        assert res == str(dummy_file)
+        assert captured_opts["format"] == "best[ext=mp4]/best"
+
+
+def test_audio_download_format_with_ffmpeg(tmp_path):
+    """Test audio format options include FFmpegExtractAudio postprocessor when ffmpeg is present."""
+    job_id = "dl_ffmpeg_test_04"
+    job_store.create_download_job(job_id, "job_test", "audio", "320kbps", "https://example.com/audio")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_audio.mp3"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"audio bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(job_id, "https://example.com/audio", "audio", "320kbps")
+        assert res == str(dummy_file)
+        assert captured_opts["format"] == "bestaudio/best"
+        assert "postprocessors" in captured_opts
+        assert captured_opts["postprocessors"][0]["key"] == "FFmpegExtractAudio"
+        assert captured_opts["postprocessors"][0]["preferredquality"] == "320"
+
+
+def test_audio_download_format_without_ffmpeg_fallback(tmp_path):
+    """Test audio format falls back to raw audio stream without postprocessors when ffmpeg is missing."""
+    job_id = "dl_ffmpeg_test_05"
+    job_store.create_download_job(job_id, "job_test", "audio", "192kbps", "https://example.com/audio")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_audio.webm"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"raw audio bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=False), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(job_id, "https://example.com/audio", "audio", "192kbps")
+        assert res == str(dummy_file)
+        assert captured_opts["format"] == "bestaudio/best"
+        assert "postprocessors" not in captured_opts
+
+
+def test_ffmpeg_location_configuration_passed_to_ydl_opts(tmp_path):
+    """Test passing ffmpeg_location parameter or settings config populates ydl_opts."""
+    job_id = "dl_ffmpeg_test_06"
+    job_store.create_download_job(job_id, "job_test", "video", "720p", "https://example.com/video")
+    
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "test_video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        def mock_download(urls):
+            dummy_file.write_bytes(b"video bytes")
+        mock_ydl.download.side_effect = mock_download
+        return mock_ydl
+
+    custom_location = "/custom/path/to/ffmpeg"
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(job_id, "https://example.com/video", "video", "720p", ffmpeg_location=custom_location)
+        assert captured_opts.get("ffmpeg_location") == custom_location
+
+
+def test_error_mapping_missing_ffmpeg_postprocessing_error(tmp_path):
+    """Test PostProcessingError mentioning missing ffmpeg maps to user-friendly error message."""
+    job_id = "dl_ffmpeg_test_07"
+    job_store.create_download_job(job_id, "job_test", "audio", "192kbps", "https://example.com/audio")
+
+    def mock_ydl_init(opts):
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = PostProcessingError("ffmpeg not found. Please install or provide the path using --ffmpeg-location")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        with pytest.raises(Exception) as exc_info:
+            execute_download(job_id, "https://example.com/audio", "audio", "192kbps")
+        
+        expected_msg = "Audio conversion / video merging requires ffmpeg. Please install ffmpeg."
+        assert expected_msg in str(exc_info.value)
+        
+        job = job_store.get_job(job_id)
+        assert job["status"] == "failed"
+        assert job["error"] == expected_msg
+
+
+def test_error_mapping_missing_ffmpeg_download_error(tmp_path):
+    """Test DownloadError mentioning missing ffmpeg maps to user-friendly error message."""
+    job_id = "dl_ffmpeg_test_08"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+
+    def mock_ydl_init(opts):
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = DownloadError("Postprocessing: ffmpeg not found")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        with pytest.raises(Exception) as exc_info:
+            execute_download(job_id, "https://example.com/video", "video", "1080p")
+        
+        expected_msg = "Audio conversion / video merging requires ffmpeg. Please install ffmpeg."
+        assert expected_msg in str(exc_info.value)
+        
+        job = job_store.get_job(job_id)
+        assert job["status"] == "failed"
+        assert job["error"] == expected_msg
+
+
+def test_error_mapping_other_download_error(tmp_path):
+    """Test non-ffmpeg DownloadError retains its original message."""
+    job_id = "dl_ffmpeg_test_09"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+
+    def mock_ydl_init(opts):
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = DownloadError("HTTP Error 404: Not Found")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        with pytest.raises(Exception) as exc_info:
+            execute_download(job_id, "https://example.com/video", "video", "1080p")
+        
+        assert "HTTP Error 404: Not Found" in str(exc_info.value)
+        
+        job = job_store.get_job(job_id)
+        assert job["status"] == "failed"
+        assert job["error"] == "HTTP Error 404: Not Found"
