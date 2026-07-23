@@ -43,6 +43,11 @@ describe('User Settings Storage Service', () => {
       proxyUrl: 'http://127.0.0.1:8080',
       subtitleLang: 'es',
       darkMode: 'oled',
+      maxFilesize: '500M',
+      rateLimit: '2M',
+      restrictFilenames: true,
+      forceIpv4: true,
+      outputTemplate: '%(uploader)s - %(title)s.%(ext)s',
     });
 
     expect(updated.remuxMkv).toBe(true);
@@ -52,17 +57,35 @@ describe('User Settings Storage Service', () => {
     expect(updated.proxyUrl).toBe('http://127.0.0.1:8080');
     expect(updated.subtitleLang).toBe('es');
     expect(updated.darkMode).toBe('oled');
+    expect(updated.maxFilesize).toBe('500M');
+    expect(updated.rateLimit).toBe('2M');
+    expect(updated.restrictFilenames).toBe(true);
+    expect(updated.forceIpv4).toBe(true);
+    expect(updated.outputTemplate).toBe('%(uploader)s - %(title)s.%(ext)s');
 
     const reloaded = await getSettings();
     expect(reloaded.remuxMkv).toBe(true);
     expect(reloaded.proxyUrl).toBe('http://127.0.0.1:8080');
+    expect(reloaded.maxFilesize).toBe('500M');
+    expect(reloaded.rateLimit).toBe('2M');
+    expect(reloaded.restrictFilenames).toBe(true);
+    expect(reloaded.forceIpv4).toBe(true);
+    expect(reloaded.outputTemplate).toBe('%(uploader)s - %(title)s.%(ext)s');
   });
 
   test('resets settings to default values', async () => {
-    await saveSettings({ audioCodec: 'OPUS', darkMode: 'oled', remuxMkv: true });
+    await saveSettings({
+      audioCodec: 'OPUS',
+      darkMode: 'oled',
+      remuxMkv: true,
+      maxFilesize: '500M',
+      restrictFilenames: true,
+    });
     const reset = await resetSettings();
     expect(reset.audioCodec).toBe('MP3');
     expect(reset.darkMode).toBe('dark');
     expect(reset.remuxMkv).toBe(false);
+    expect(reset.maxFilesize).toBe('');
+    expect(reset.restrictFilenames).toBe(false);
   });
 });

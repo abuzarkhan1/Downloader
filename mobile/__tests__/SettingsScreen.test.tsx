@@ -37,5 +37,20 @@ describe('SettingsScreen Component', () => {
 
     const proxyInput = instance.findByProps({ testID: 'setting-proxy-input' });
     expect(proxyInput).toBeTruthy();
+
+    const maxFilesizeInput = instance.findByProps({ testID: 'setting-max-filesize-input' });
+    expect(maxFilesizeInput).toBeTruthy();
+
+    const rateLimitInput = instance.findByProps({ testID: 'setting-rate-limit-input' });
+    expect(rateLimitInput).toBeTruthy();
+
+    const forceIpv4Switch = instance.findByProps({ testID: 'setting-force-ipv4-switch' });
+    expect(forceIpv4Switch).toBeTruthy();
+
+    const restrictFilenamesSwitch = instance.findByProps({ testID: 'setting-restrict-filenames-switch' });
+    expect(restrictFilenamesSwitch).toBeTruthy();
+
+    const outputTemplateInput = instance.findByProps({ testID: 'setting-output-template-input' });
+    expect(outputTemplateInput).toBeTruthy();
   });
 });

@@ -26,6 +26,11 @@ def download_media_task(
     proxy_url: Optional[str] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
+    max_filesize: Optional[str] = None,
+    rate_limit: Optional[str] = None,
+    restrict_filenames: bool = False,
+    force_ipv4: bool = False,
+    output_template: Optional[str] = None,
 ):
     """Celery worker task to process a media download job."""
     logger.info(f"[Celery Worker] Starting download task for job: {download_job_id}")
@@ -48,6 +53,11 @@ def download_media_task(
             proxy_url=proxy_url,
             start_time=start_time,
             end_time=end_time,
+            max_filesize=max_filesize,
+            rate_limit=rate_limit,
+            restrict_filenames=restrict_filenames,
+            force_ipv4=force_ipv4,
+            output_template=output_template,
         )
     except Exception as e:
         logger.error(f"[Celery Worker] Error executing download job {download_job_id}: {e}")
@@ -70,6 +80,11 @@ def run_download_job(
     proxy_url: Optional[str] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
+    max_filesize: Optional[str] = None,
+    rate_limit: Optional[str] = None,
+    restrict_filenames: bool = False,
+    force_ipv4: bool = False,
+    output_template: Optional[str] = None,
 ):
     """Local fallback runner (FastAPI BackgroundTasks or thread pool execution)."""
     logger.info(f"[Local BackgroundTask] Starting download task for job: {download_job_id}")
@@ -92,6 +107,11 @@ def run_download_job(
             proxy_url=proxy_url,
             start_time=start_time,
             end_time=end_time,
+            max_filesize=max_filesize,
+            rate_limit=rate_limit,
+            restrict_filenames=restrict_filenames,
+            force_ipv4=force_ipv4,
+            output_template=output_template,
         )
     except Exception as e:
         logger.error(f"[Local BackgroundTask] Error executing download job {download_job_id}: {e}")
@@ -115,6 +135,11 @@ def dispatch_download_job(
     proxy_url: Optional[str] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
+    max_filesize: Optional[str] = None,
+    rate_limit: Optional[str] = None,
+    restrict_filenames: bool = False,
+    force_ipv4: bool = False,
+    output_template: Optional[str] = None,
 ):
     """
     Dispatches download job:
@@ -141,6 +166,11 @@ def dispatch_download_job(
             proxy_url,
             start_time,
             end_time,
+            max_filesize,
+            rate_limit,
+            restrict_filenames,
+            force_ipv4,
+            output_template,
         )
     else:
         logger.info(f"Dispatching download job {download_job_id} via FastAPI BackgroundTasks.")
@@ -163,5 +193,10 @@ def dispatch_download_job(
             proxy_url,
             start_time,
             end_time,
+            max_filesize,
+            rate_limit,
+            restrict_filenames,
+            force_ipv4,
+            output_template,
         )
 

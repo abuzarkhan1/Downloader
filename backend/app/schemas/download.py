@@ -19,6 +19,11 @@ class DownloadRequest(BaseModel):
     proxy_url: Optional[str] = Field(None, description="Proxy server URL")
     start_time: Optional[str] = Field(None, description="Clip start time (e.g. HH:MM:SS or SS)")
     end_time: Optional[str] = Field(None, description="Clip end time (e.g. HH:MM:SS or SS)")
+    max_filesize: Optional[str] = Field(None, description="Max filesize limit (e.g. '50M')")
+    rate_limit: Optional[str] = Field(None, description="Download rate limit (e.g. '500k')")
+    restrict_filenames: bool = Field(False, description="Restrict filenames to ASCII characters only")
+    force_ipv4: bool = Field(False, description="Force IPv4 connection")
+    output_template: Optional[str] = Field(None, description="Custom yt-dlp output template string")
 
 DownloadRequestPayload = DownloadRequest
 

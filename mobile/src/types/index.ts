@@ -49,6 +49,11 @@ export interface DownloadRequest {
   subtitleLang?: string;
   startTime?: string;
   endTime?: string;
+  maxFilesize?: string;
+  rateLimit?: string;
+  restrictFilenames?: boolean;
+  forceIpv4?: boolean;
+  outputTemplate?: string;
 }
 
 export interface DownloadJobResponse {
@@ -107,6 +112,11 @@ export interface UserSettings {
   subtitleLang?: string;
   startTime?: string;
   endTime?: string;
+  maxFilesize?: string;
+  rateLimit?: string;
+  restrictFilenames?: boolean;
+  forceIpv4?: boolean;
+  outputTemplate?: string;
 }
 
 export interface CommandTemplate {

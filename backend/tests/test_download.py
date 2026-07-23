@@ -204,3 +204,71 @@ def test_download_request_payload_parity_fields():
         assert kwargs["end_time"] == "00:00:30"
 
 
+def test_download_request_payload_agent1_parity_fields():
+    job_store.register_analyze_job("job_agent1_123", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    
+    with patch("app.api.v1.download.dispatch_download_job") as mock_dispatch:
+        response = client.post(
+            "/api/v1/download",
+            json={
+                "id": "job_agent1_123",
+                "format_type": "video",
+                "quality": "1080p",
+                "max_filesize": "50M",
+                "rate_limit": "500k",
+                "restrict_filenames": True,
+                "force_ipv4": True,
+                "output_template": "%(title)s_custom.%(ext)s"
+            }
+        )
+        assert response.status_code == 202
+        data = response.json()
+        assert "download_job_id" in data
+        assert mock_dispatch.called
+        kwargs = mock_dispatch.call_args.kwargs
+        assert kwargs["max_filesize"] == "50M"
+        assert kwargs["rate_limit"] == "500k"
+        assert kwargs["restrict_filenames"] is True
+        assert kwargs["force_ipv4"] is True
+        assert kwargs["output_template"] == "%(title)s_custom.%(ext)s"
+
+
+def test_downloader_agent1_ydl_opts_parity(tmp_path):
+    from app.services.downloader import execute_download
+    job_id = "dl_agent1_parity_01"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "custom_video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"dummy video bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "1080p",
+            max_filesize="50M",
+            rate_limit="500k",
+            restrict_filenames=True,
+            force_ipv4=True,
+            output_template="custom_video.%(ext)s"
+        )
+        assert res == str(dummy_file)
+        assert captured_opts.get("max_filesize") == 52428800
+        assert captured_opts.get("ratelimit") == 512000
+        assert captured_opts.get("restrictfilenames") is True
+        assert captured_opts.get("source_address") == "0.0.0.0"
+        assert captured_opts.get("outtmpl") == str(job_dir / "custom_video.%(ext)s")
+
+
+

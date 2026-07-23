@@ -19,6 +19,11 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   subtitleLang: 'en',
   startTime: '',
   endTime: '',
+  maxFilesize: '',
+  rateLimit: '',
+  restrictFilenames: false,
+  forceIpv4: false,
+  outputTemplate: '',
 };
 
 let AsyncStorage: any = null;

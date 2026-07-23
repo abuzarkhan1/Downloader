@@ -95,12 +95,17 @@ def apply_custom_flags(ydl_opts: Dict[str, Any], custom_flags: Optional[List[str
             ydl_opts["writethumbnail"] = True
         elif flag_clean == "--keep-video":
             ydl_opts["keepvideo"] = True
+        elif flag_clean == "--restrict-filenames":
+            ydl_opts["restrictfilenames"] = True
+        elif flag_clean == "--force-ipv4":
+            ydl_opts["source_address"] = "0.0.0.0"
 
 
 try:
-    from yt_dlp.utils import download_range_func
+    from yt_dlp.utils import download_range_func, parse_bytes
 except ImportError:
     download_range_func = None
+    parse_bytes = None
 
 
 def parse_time_to_seconds(t_str: Optional[str]) -> Optional[float]:
@@ -158,6 +163,11 @@ def execute_download(
     proxy_url: Optional[str] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
+    max_filesize: Optional[str] = None,
+    rate_limit: Optional[str] = None,
+    restrict_filenames: bool = False,
+    force_ipv4: bool = False,
+    output_template: Optional[str] = None,
 ) -> str:
     """
     Executes yt-dlp download & ffmpeg postprocessing.
@@ -166,7 +176,13 @@ def execute_download(
     """
     job_store.update_job_progress(download_job_id, 5.0, status="processing")
     job_dir = storage_manager.get_job_dir(download_job_id)
-    out_template = str(job_dir / "%(title)s.%(ext)s")
+    if output_template:
+        if os.path.isabs(output_template):
+            out_template = output_template
+        else:
+            out_template = str(job_dir / output_template)
+    else:
+        out_template = str(job_dir / "%(title)s.%(ext)s")
 
     def progress_hook(d):
         if d.get("status") == "downloading":
@@ -186,6 +202,20 @@ def execute_download(
         "nocheckcertificate": True,
         "writethumbnail": True,
     }
+
+    if max_filesize:
+        parsed_size = parse_bytes(max_filesize) if parse_bytes else None
+        ydl_opts["max_filesize"] = parsed_size if parsed_size is not None else max_filesize
+
+    if rate_limit:
+        parsed_rate = parse_bytes(str(rate_limit)) if parse_bytes else None
+        ydl_opts["ratelimit"] = parsed_rate if parsed_rate is not None else (int(rate_limit) if str(rate_limit).isdigit() else rate_limit)
+
+    if restrict_filenames:
+        ydl_opts["restrictfilenames"] = True
+
+    if force_ipv4:
+        ydl_opts["source_address"] = "0.0.0.0"
 
     if proxy_url:
         ydl_opts["proxy"] = proxy_url

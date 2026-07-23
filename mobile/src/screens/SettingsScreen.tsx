@@ -43,6 +43,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [dirInput, setDirInput] = useState('/Downloads/Seal');
   const [cookiesInput, setCookiesInput] = useState('');
   const [proxyInput, setProxyInput] = useState('');
+  const [maxFilesizeInput, setMaxFilesizeInput] = useState('');
+  const [rateLimitInput, setRateLimitInput] = useState('');
+  const [outputTemplateInput, setOutputTemplateInput] = useState('');
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   useEffect(() => {
@@ -52,6 +55,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       setDirInput(s.downloadDirectory || '/Downloads/Seal');
       setCookiesInput(s.cookiesStr || '');
       setProxyInput(s.proxyUrl || '');
+      setMaxFilesizeInput(s.maxFilesize || '');
+      setRateLimitInput(s.rateLimit || '');
+      setOutputTemplateInput(s.outputTemplate || '');
     }
     load();
   }, []);
@@ -71,6 +77,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setDirInput(defaultSet.downloadDirectory);
     setCookiesInput(defaultSet.cookiesStr || '');
     setProxyInput(defaultSet.proxyUrl || '');
+    setMaxFilesizeInput(defaultSet.maxFilesize || '');
+    setRateLimitInput(defaultSet.rateLimit || '');
+    setOutputTemplateInput(defaultSet.outputTemplate || '');
     if (onSettingsChanged) onSettingsChanged(defaultSet);
     Alert.alert('Settings Reset', 'Preferences have been restored to defaults.');
   };
@@ -177,6 +186,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               onEndEditing={() => updateSetting('downloadDirectory', dirInput.trim() || '/Downloads/Seal')}
               autoCapitalize="none"
               autoCorrect={false}
+            />
+          </View>
+
+          {/* Restrict Filenames (ASCII only) Switch */}
+          <View style={[styles.settingRow, styles.topSpacing]}>
+            <View style={styles.settingTextGroup}>
+              <Text style={styles.settingTitle}>Restrict Filenames (ASCII only)</Text>
+              <Text style={styles.settingDesc}>Restrict filenames to ASCII characters and avoid spaces</Text>
+            </View>
+            <Switch
+              value={!!settings.restrictFilenames}
+              onValueChange={(val) => updateSetting('restrictFilenames', val)}
+              trackColor={{ false: SURFACE_BG, true: LIME_ACCENT }}
+              thumbColor={settings.restrictFilenames ? DARK_BG : SUBTEXT_COLOR}
+              testID="setting-restrict-filenames-switch"
+            />
+          </View>
+
+          {/* Custom Output Filename Template Input */}
+          <Text style={[styles.settingTitle, styles.topSpacing]}>Custom Output Filename Template</Text>
+          <Text style={styles.settingDesc}>yt-dlp template string (e.g. %(uploader)s - %(title)s.%(ext)s)</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.textInput}
+              value={outputTemplateInput}
+              onChangeText={setOutputTemplateInput}
+              onEndEditing={() => updateSetting('outputTemplate', outputTemplateInput.trim())}
+              placeholder="e.g. %(uploader)s - %(title)s.%(ext)s"
+              placeholderTextColor="#8C8D82"
+              autoCapitalize="none"
+              autoCorrect={false}
+              testID="setting-output-template-input"
             />
           </View>
         </View>
@@ -364,6 +405,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               trackColor={{ false: SURFACE_BG, true: LIME_ACCENT }}
               thumbColor={settings.sponsorBlock ? DARK_BG : SUBTEXT_COLOR}
               testID="setting-sponsorblock-switch"
+            />
+          </View>
+
+          {/* Force IPv4 Switch */}
+          <View style={[styles.settingRow, styles.topSpacing]}>
+            <View style={styles.settingTextGroup}>
+              <Text style={styles.settingTitle}>Force IPv4</Text>
+              <Text style={styles.settingDesc}>Make all connections via IPv4 protocol</Text>
+            </View>
+            <Switch
+              value={!!settings.forceIpv4}
+              onValueChange={(val) => updateSetting('forceIpv4', val)}
+              trackColor={{ false: SURFACE_BG, true: LIME_ACCENT }}
+              thumbColor={settings.forceIpv4 ? DARK_BG : SUBTEXT_COLOR}
+              testID="setting-force-ipv4-switch"
+            />
+          </View>
+
+          {/* Max File Size Input */}
+          <Text style={[styles.settingTitle, styles.topSpacing]}>Max File Size</Text>
+          <Text style={styles.settingDesc}>Limit max file size (e.g. 500M, 1G)</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.textInput}
+              value={maxFilesizeInput}
+              onChangeText={setMaxFilesizeInput}
+              onEndEditing={() => updateSetting('maxFilesize', maxFilesizeInput.trim())}
+              placeholder="e.g. 500M"
+              placeholderTextColor="#8C8D82"
+              autoCapitalize="none"
+              autoCorrect={false}
+              testID="setting-max-filesize-input"
+            />
+          </View>
+
+          {/* Download Rate Limit Input */}
+          <Text style={[styles.settingTitle, styles.topSpacing]}>Download Rate Limit</Text>
+          <Text style={styles.settingDesc}>Maximum download speed (e.g. 2M, 500k)</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.textInput}
+              value={rateLimitInput}
+              onChangeText={setRateLimitInput}
+              onEndEditing={() => updateSetting('rateLimit', rateLimitInput.trim())}
+              placeholder="e.g. 2M"
+              placeholderTextColor="#8C8D82"
+              autoCapitalize="none"
+              autoCorrect={false}
+              testID="setting-rate-limit-input"
             />
           </View>
 

@@ -52,6 +52,11 @@ async def request_download(payload: DownloadRequest, background_tasks: Backgroun
         proxy_url=payload.proxy_url,
         start_time=payload.start_time,
         end_time=payload.end_time,
+        max_filesize=payload.max_filesize,
+        rate_limit=payload.rate_limit,
+        restrict_filenames=payload.restrict_filenames or False,
+        force_ipv4=payload.force_ipv4 or False,
+        output_template=payload.output_template,
     )
 
 
