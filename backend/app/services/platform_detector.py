@@ -22,11 +22,16 @@ FACEBOOK_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+TWITTER_PATTERN = re.compile(
+    r"^(https?://)?(www\.|mobile\.|m\.)?(twitter\.com|x\.com)/[\w.-]+/(status|statuses|i/status)/\d+",
+    re.IGNORECASE,
+)
+
 
 def detect_platform(url: str) -> Optional[str]:
     """
     Detects platform from URL string.
-    Returns 'youtube', 'tiktok', 'instagram', 'facebook', or None if unsupported.
+    Returns 'youtube', 'tiktok', 'instagram', 'facebook', 'twitter', or None if unsupported.
     """
     if not url or not isinstance(url, str):
         return None
@@ -41,5 +46,7 @@ def detect_platform(url: str) -> Optional[str]:
         return "instagram"
     elif FACEBOOK_PATTERN.search(clean_url):
         return "facebook"
+    elif TWITTER_PATTERN.search(clean_url):
+        return "twitter"
 
     return None

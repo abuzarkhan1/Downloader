@@ -20,6 +20,8 @@ describe('API Client & Mock Service', () => {
     expect(detectPlatform('https://youtu.be/456')).toBe('youtube');
     expect(detectPlatform('https://www.tiktok.com/@user/video/789')).toBe('tiktok');
     expect(detectPlatform('https://www.instagram.com/reel/abc')).toBe('instagram');
+    expect(detectPlatform('https://twitter.com/user/status/123456')).toBe('twitter');
+    expect(detectPlatform('https://x.com/user/status/123456')).toBe('twitter');
     expect(detectPlatform('https://example.com/video.mp4')).toBe('unknown');
   });
 
@@ -40,6 +42,14 @@ describe('API Client & Mock Service', () => {
     test('analyzeUrl returns video and audio formats for valid YouTube link', async () => {
       const response = await analyzeUrl('https://www.youtube.com/watch?v=test');
       expect(response.platform).toBe('youtube');
+      expect(response.title).toBeDefined();
+      expect(response.video_formats.length).toBeGreaterThan(0);
+      expect(response.audio_formats.length).toBeGreaterThan(0);
+    });
+
+    test('analyzeUrl returns video and audio formats for valid Twitter / X link', async () => {
+      const response = await analyzeUrl('https://x.com/user/status/123456');
+      expect(response.platform).toBe('twitter');
       expect(response.title).toBeDefined();
       expect(response.video_formats.length).toBeGreaterThan(0);
       expect(response.audio_formats.length).toBeGreaterThan(0);

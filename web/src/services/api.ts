@@ -13,7 +13,7 @@ export interface AudioFormat {
 
 export interface AnalyzeResponse {
   id: string;
-  platform: 'youtube' | 'tiktok' | 'instagram' | string;
+  platform: 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'twitter' | string;
   title: string;
   thumbnail: string;
   duration_seconds: number;
@@ -65,7 +65,7 @@ export class ApiError extends Error {
 export function formatErrorMessage(errorCode: ErrorCode | string): string {
   switch (errorCode) {
     case 'UNSUPPORTED_URL':
-      return 'The provided URL is not supported. Supported platforms are YouTube, TikTok, Instagram, and Facebook.';
+      return 'The provided URL is not supported. Supported platforms are YouTube, TikTok, Instagram, Facebook, and X (Twitter).';
     case 'PRIVATE_CONTENT':
       return 'This content is private or restricted and cannot be downloaded.';
     case 'RATE_LIMITED':
@@ -248,16 +248,23 @@ function detectPlatformFromUrl(url: string): string {
   if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
   if (lowerUrl.includes('tiktok.com')) return 'tiktok';
   if (lowerUrl.includes('instagram.com')) return 'instagram';
+  if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.watch')) return 'facebook';
+  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'twitter';
   return 'youtube';
 }
 
 function getMockAnalyzeResponse(url: string): AnalyzeResponse {
   const platform = detectPlatformFromUrl(url);
 
+  let title = `Sample ${platform.toUpperCase()} Video - High Quality Media`;
+  if (platform === 'twitter') {
+    title = 'Sample X (Twitter) Post Video - High Quality Media';
+  }
+
   return {
     id: `job_mock_${Math.random().toString(36).substring(2, 9)}`,
     platform,
-    title: `Sample ${platform.toUpperCase()} Video - High Quality Media`,
+    title,
     thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=600&auto=format&fit=crop&q=80',
     duration_seconds: 184,
     uploader: 'Sample Creator',

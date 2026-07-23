@@ -155,7 +155,8 @@ These are **product requirements**, not optional legal fluff:
 | TikTok | P0 | Max ~1080p; watermark-free extraction |
 | Instagram | P0 | Max ~1080p; public reels and posts |
 | Facebook | P0 (Shipped) | Video/reel extraction via yt-dlp (watch, reel, fb.watch) |
-| Twitter/X, Vimeo, SoundCloud, Reddit | P1/P2 | Enable opportunistically since yt-dlp already supports them |
+| Twitter / X | P0 (Shipped) | Tweet video & status clip extraction via yt-dlp (twitter.com, x.com) |
+| Vimeo, SoundCloud, Reddit | P1/P2 | Enable opportunistically since yt-dlp already supports them |
 
 ### 7.5 Non-Functional Requirements
 - **Performance**: format analysis response < 5s p90, < 10s p99.

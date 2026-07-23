@@ -6,7 +6,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export type PlatformType = "youtube" | "tiktok" | "instagram" | "facebook" | "auto" | string;
+export type PlatformType = "youtube" | "tiktok" | "instagram" | "facebook" | "twitter" | "x" | "auto" | string;
 
 export interface PlatformBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   platform: PlatformType;
@@ -17,7 +17,7 @@ export interface PlatformBadgeProps extends React.HTMLAttributes<HTMLDivElement>
 
 const platformMeta: Record<
   string,
-  { name: string; dotColor: string; bgGlow: string; borderColor: string }
+  { name: string; dotColor: string; bgGlow: string; borderColor: string; icon?: string }
 > = {
   youtube: {
     name: "YouTube",
@@ -42,6 +42,20 @@ const platformMeta: Record<
     dotColor: "bg-[#1877F2]",
     bgGlow: "shadow-blue-500/20",
     borderColor: "hover:border-blue-500/40",
+  },
+  twitter: {
+    name: "X (Twitter)",
+    dotColor: "bg-[#1DA1F2]",
+    bgGlow: "shadow-sky-500/20",
+    borderColor: "hover:border-sky-500/40",
+    icon: "𝕏",
+  },
+  x: {
+    name: "X (Twitter)",
+    dotColor: "bg-[#1DA1F2]",
+    bgGlow: "shadow-sky-500/20",
+    borderColor: "hover:border-sky-500/40",
+    icon: "𝕏",
   },
 };
 
@@ -85,13 +99,17 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
       )}
       {...props}
     >
-      <span
-        className={cn(
-          "rounded-full shrink-0 shadow-sm",
-          meta.dotColor,
-          dotSizes[size]
-        )}
-      />
+      {meta.icon ? (
+        <span className="shrink-0 text-xs font-bold leading-none">{meta.icon}</span>
+      ) : (
+        <span
+          className={cn(
+            "rounded-full shrink-0 shadow-sm",
+            meta.dotColor,
+            dotSizes[size]
+          )}
+        />
+      )}
       {showLabel && <span>{meta.name}</span>}
     </div>
   );

@@ -1,4 +1,4 @@
-export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'unknown';
+export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'twitter' | 'unknown';
 
 export interface VideoFormat {
   quality: string;

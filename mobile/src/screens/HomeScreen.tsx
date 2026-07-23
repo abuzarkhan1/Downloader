@@ -88,6 +88,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
                 <View style={[styles.dot, styles.fbDot]} />
                 <Text style={styles.platformTagText}>Facebook</Text>
               </View>
+
+              {/* X (Twitter) Tag */}
+              <View style={styles.platformTag}>
+                <View style={[styles.dot, styles.twDot]} />
+                <Text style={styles.platformTagText}>X (Twitter)</Text>
+              </View>
             </View>
           </View>
 
@@ -256,6 +262,9 @@ const styles = StyleSheet.create({
   },
   fbDot: {
     backgroundColor: '#1877F2',
+  },
+  twDot: {
+    backgroundColor: '#FFFFFF',
   },
   platformTagText: {
     color: '#FAFAFA',

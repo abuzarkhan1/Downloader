@@ -47,6 +47,14 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
           textColor: '#1877F2',
           borderColor: 'rgba(24, 119, 242, 0.3)',
         };
+      case 'twitter':
+        return {
+          label: 'X (Twitter)',
+          icon: '𝕏',
+          bgColor: 'rgba(255, 255, 255, 0.15)',
+          textColor: '#FFFFFF',
+          borderColor: 'rgba(255, 255, 255, 0.3)',
+        };
       default:
         return {
           label: 'Universal Web',

@@ -32,9 +32,14 @@ def test_platform_detector():
     assert detect_platform("https://fb.watch/ab123c/") == "facebook"
     assert detect_platform("https://www.facebook.com/reel/987654321") == "facebook"
 
+    # Twitter / X URL tests
+    assert detect_platform("https://twitter.com/user/status/1234567890") == "twitter"
+    assert detect_platform("https://x.com/user/status/1234567890") == "twitter"
+    assert detect_platform("https://mobile.twitter.com/user/statuses/1234567890") == "twitter"
+    assert detect_platform("https://x.com/i/status/1234567890") == "twitter"
+
     # Unsupported URLs
     assert detect_platform("https://example.com/video") is None
-    assert detect_platform("https://twitter.com/user/status/123") is None
     assert detect_platform("invalid_url_string") is None
     assert detect_platform("") is None
 

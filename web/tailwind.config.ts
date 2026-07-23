@@ -21,6 +21,10 @@ const config: Config = {
           DEFAULT: "#0B4DDE",
           oklch: "oklch(0.66 0.16 252)",
         },
+        platform: {
+          twitter: "#1DA1F2",
+          x: "#FFFFFF",
+        },
         "text-primary": "#FAFAFA",
         "text-muted": "#A1A1AA",
         destructive: "#FF5252",

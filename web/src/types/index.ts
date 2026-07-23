@@ -11,6 +11,8 @@ export interface FormatOption {
   bitrate?: string;
 }
 
+export type Platform = "youtube" | "tiktok" | "instagram" | "facebook" | "twitter" | "other";
+
 export interface MediaMetadata {
   id: string;
   title: string;
@@ -18,7 +20,7 @@ export interface MediaMetadata {
   uploaderUrl?: string;
   thumbnailUrl: string;
   duration: string;
-  platform?: "youtube" | "tiktok" | "instagram" | "facebook" | "other";
+  platform?: Platform;
   formats: FormatOption[];
 }
 

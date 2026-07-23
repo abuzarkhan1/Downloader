@@ -61,6 +61,9 @@ export function detectPlatform(url: string): Platform {
   if (lower.includes('facebook.com') || lower.includes('fb.watch') || lower.includes('fb.com')) {
     return 'facebook';
   }
+  if (lower.includes('twitter.com') || lower.includes('x.com')) {
+    return 'twitter';
+  }
   return 'unknown';
 }
 
@@ -177,6 +180,23 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '480p', ext: 'mp4', filesize_mb: 14.0, fps: 30 },
         ],
         audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 2.0 }],
+      };
+    }
+
+    if (platform === 'twitter') {
+      return {
+        id: `job_tw_${Date.now()}`,
+        platform: 'twitter',
+        title: 'Breaking News & Video Post on X',
+        thumbnail: 'https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=80',
+        duration_seconds: 45,
+        uploader: '@XCreator',
+        video_formats: [
+          { quality: '1080p', ext: 'mp4', filesize_mb: 32.0, fps: 30 },
+          { quality: '720p', ext: 'mp4', filesize_mb: 16.5, fps: 30 },
+          { quality: '480p', ext: 'mp4', filesize_mb: 8.2, fps: 30 },
+        ],
+        audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 1.1 }],
       };
     }
 
