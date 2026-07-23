@@ -129,8 +129,8 @@ export default function Home() {
       remux_mkv: extraOptions?.remux_mkv ?? userSettings.remuxMkv,
       crop_artwork: userSettings.cropArtwork,
       embed_subtitles: extraOptions?.embed_subtitles ?? userSettings.embedSubtitles,
-      cookies_str: userSettings.netscapeCookies || undefined,
-      proxy_url: userSettings.proxyUrl || undefined,
+      cookies_str: extraOptions?.cookies_str || userSettings.netscapeCookies || undefined,
+      proxy_url: extraOptions?.proxy_url || userSettings.proxyUrl || undefined,
       start_time: extraOptions?.start_time,
       end_time: extraOptions?.end_time,
       max_filesize: userSettings.maxFilesize || undefined,
@@ -195,103 +195,90 @@ export default function Home() {
   return (
     <div
       className={`min-h-screen ${
-        userSettings.oledDarkMode ? "bg-[#000000]" : "bg-[#09090B]"
+        userSettings.oledDarkMode ? "bg-[#000000]" : "bg-[#13140E]"
       } text-zinc-100 flex flex-col justify-between font-sans selection:bg-[#A3D48D] selection:text-black pb-16 sm:pb-0`}
     >
       {/* Top Application Header */}
-      <header className="w-full border-b border-[#27272A] bg-[#121215]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="w-full border-b border-[#323428] bg-[#13140E]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between">
         {/* Logo Branding */}
         <div
           onClick={handleReset}
           className="flex items-center gap-3 cursor-pointer group transition-opacity hover:opacity-90"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#A3D48D] flex items-center justify-center text-black font-extrabold text-lg shadow-lg shadow-[#A3D48D]/30 group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-[#A3D48D] flex items-center justify-center text-black font-extrabold text-lg shadow-lg shadow-[#A3D48D]/20 group-hover:scale-105 transition-transform font-mono">
             V
           </div>
           <div>
-            <h1 className="text-base font-extrabold text-white tracking-tight flex items-center gap-1.5">
+            <h1 className="text-base font-extrabold text-white tracking-tight flex items-center gap-1.5 font-mono">
               <span>VideoDownloader</span>
-              <span className="px-1.5 py-0.2 text-[10px] font-extrabold uppercase rounded bg-[#A3D48D]/20 text-[#A3D48D] border border-[#A3D48D]/30">
+              <span className="px-1.5 py-0.2 text-[9px] font-mono font-extrabold uppercase rounded bg-[#A3D48D]/20 text-[#A3D48D] border border-[#A3D48D]/30">
                 Seal MD3
               </span>
             </h1>
-            <p className="text-[11px] text-zinc-400 font-medium hidden sm:block">Universal Media Extractor</p>
+            <p className="text-[11px] text-zinc-400 font-mono hidden sm:block">Universal Bento Media Extractor</p>
           </div>
         </div>
 
-        {/* Desktop Top Navigation Tabs */}
-        <nav className="hidden md:flex items-center gap-1.5 bg-[#09090B] border border-[#27272A] p-1 rounded-xl">
+        {/* Desktop Navigation Tabs */}
+        <nav className="hidden md:flex items-center gap-1 bg-[#202119] border border-[#323428] p-1 rounded-xl">
           <button
             type="button"
             onClick={() => {
               setActiveTab("home");
               if (!mediaData) setCurrentStep("home");
             }}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
               activeTab === "home"
-                ? "bg-[#A3D48D] text-black font-bold shadow-md shadow-[#A3D48D]/20"
+                ? "bg-[#A3D48D] text-black shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
             <span>Home</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("history")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
               activeTab === "history"
-                ? "bg-[#A3D48D] text-black font-bold shadow-md shadow-[#A3D48D]/20"
+                ? "bg-[#A3D48D] text-black shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
             <span>History</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("commands")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
               activeTab === "commands"
-                ? "bg-[#A3D48D] text-black font-bold shadow-md shadow-[#A3D48D]/20"
+                ? "bg-[#A3D48D] text-black shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
             <span>Commands</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
               activeTab === "settings"
-                ? "bg-[#A3D48D] text-black font-bold shadow-md shadow-[#A3D48D]/20"
+                ? "bg-[#A3D48D] text-black shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
             <span>Settings</span>
           </button>
         </nav>
 
-        {/* Disclaimer button */}
+        {/* Legal Disclaimer button */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setDisclaimerOpen(true)}
-            className="text-xs text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg border border-[#27272A] bg-[#09090B] hover:bg-zinc-800 transition-colors"
+            className="text-xs font-mono text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg border border-[#323428] bg-[#202119] hover:bg-[#2A2B20] transition-colors"
           >
             Disclaimer
           </button>
@@ -361,60 +348,47 @@ export default function Home() {
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#121215]/95 backdrop-blur-md border-t border-[#27272A] px-4 py-2 flex items-center justify-around">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#13140E]/95 backdrop-blur-md border-t border-[#323428] px-4 py-2 flex items-center justify-around font-mono">
         <button
           type="button"
           onClick={() => {
             setActiveTab("home");
             if (!mediaData) setCurrentStep("home");
           }}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all ${
             activeTab === "home" ? "text-[#A3D48D]" : "text-zinc-400"
           }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
           <span>Home</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("history")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all ${
             activeTab === "history" ? "text-[#A3D48D]" : "text-zinc-400"
           }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
           <span>History</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("commands")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all ${
             activeTab === "commands" ? "text-[#A3D48D]" : "text-zinc-400"
           }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
           <span>Commands</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("settings")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-all ${
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition-all ${
             activeTab === "settings" ? "text-[#A3D48D]" : "text-zinc-400"
           }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
           <span>Settings</span>
         </button>
       </div>
@@ -431,9 +405,9 @@ export default function Home() {
         onClose={() => setErrorModalOpen(false)}
       />
 
-      {/* Modern Dark Footer */}
-      <footer className="w-full border-t border-[#27272A] bg-[#09090B] py-6 px-4 text-center text-xs text-zinc-500 space-y-2">
-        <p>© 2026 Universal VideoDownloader Web. All media processed temporarily without permanent storage.</p>
+      {/* Footer */}
+      <footer className="w-full border-t border-[#323428] bg-[#13140E] py-6 px-4 text-center text-xs text-zinc-500 font-mono space-y-2">
+        <p>© 2026 Universal VideoDownloader Web • Seal MD3 Bento System</p>
         <div className="flex justify-center gap-4 text-zinc-400">
           <button type="button" onClick={() => setDisclaimerOpen(true)} className="hover:underline">
             Legal Disclaimer & Terms

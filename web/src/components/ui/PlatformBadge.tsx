@@ -6,9 +6,22 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export type PlatformType = "youtube" | "tiktok" | "instagram" | "facebook" | "twitter" | "x" | "auto" | string;
+export type PlatformType =
+  | "youtube"
+  | "tiktok"
+  | "instagram"
+  | "facebook"
+  | "twitter"
+  | "x"
+  | "reddit"
+  | "pinterest"
+  | "soundcloud"
+  | "vimeo"
+  | "auto"
+  | string;
 
-export interface PlatformBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface PlatformBadgeProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   platform: PlatformType;
   isActive?: boolean;
   showLabel?: boolean;
@@ -57,6 +70,30 @@ const platformMeta: Record<
     borderColor: "hover:border-sky-500/40",
     icon: "𝕏",
   },
+  reddit: {
+    name: "Reddit",
+    dotColor: "bg-[#FF4500]",
+    bgGlow: "shadow-orange-500/20",
+    borderColor: "hover:border-orange-500/40",
+  },
+  pinterest: {
+    name: "Pinterest",
+    dotColor: "bg-[#E60023]",
+    bgGlow: "shadow-red-600/20",
+    borderColor: "hover:border-red-600/40",
+  },
+  soundcloud: {
+    name: "SoundCloud",
+    dotColor: "bg-[#FF5500]",
+    bgGlow: "shadow-orange-600/20",
+    borderColor: "hover:border-orange-600/40",
+  },
+  vimeo: {
+    name: "Vimeo",
+    dotColor: "bg-[#1AB7EA]",
+    bgGlow: "shadow-sky-400/20",
+    borderColor: "hover:border-sky-400/40",
+  },
 };
 
 export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
@@ -69,10 +106,10 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
 }) => {
   const normalizedKey = platform.toLowerCase();
   const meta = platformMeta[normalizedKey] || {
-    name: platform,
-    dotColor: "bg-[#B4EB12]",
-    bgGlow: "shadow-[#B4EB12]/20",
-    borderColor: "hover:border-[#B4EB12]/40",
+    name: platform.charAt(0).toUpperCase() + platform.slice(1),
+    dotColor: "bg-[#A3D48D]",
+    bgGlow: "shadow-[#A3D48D]/20",
+    borderColor: "hover:border-[#A3D48D]/40",
   };
 
   const sizeClasses = {
@@ -90,10 +127,11 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
   return (
     <div
       className={cn(
-        "inline-flex items-center font-semibold border transition-all duration-200 select-none",
-        "bg-[#25271F] border-[#36392D] text-[#E3E3DC]",
+        "inline-flex items-center font-semibold border transition-all duration-200 select-none cursor-default",
+        "bg-[#202119] border-[#36392D] text-[#E3E3DC]",
         meta.borderColor,
-        isActive && `border-[#B4EB12] bg-[#2F4D18] text-[#C6EE58] shadow-sm ${meta.bgGlow}`,
+        isActive &&
+          `border-[#A3D48D] bg-[#2F4D18] text-[#C6EE58] shadow-md ${meta.bgGlow}`,
         sizeClasses[size],
         className
       )}

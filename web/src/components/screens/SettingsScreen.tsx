@@ -61,7 +61,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleTestApi = async () => {
     setApiStatus("testing");
     try {
-      // Test analyze endpoint with a lightweight mock or ping
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await fetch(`${API_BASE_URL}/docs`, { method: "HEAD" });
       if (res.ok || res.status === 404) {
@@ -74,113 +73,53 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
-  const categories: { id: TabCategory; label: string; icon: React.ReactNode }[] = [
-    {
-      id: "general",
-      label: "General",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-      ),
-    },
-    {
-      id: "appearance",
-      label: "Appearance",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-        </svg>
-      ),
-    },
-    {
-      id: "directory",
-      label: "Directory & Naming",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-        </svg>
-      ),
-    },
-    {
-      id: "codec",
-      label: "Format & Codec",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zM9 10l12-3" />
-        </svg>
-      ),
-    },
-    {
-      id: "network",
-      label: "Network & Cookies",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-        </svg>
-      ),
-    },
-    {
-      id: "troubleshooting",
-      label: "Troubleshooting",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-    },
-    {
-      id: "about",
-      label: "About & Parity",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    },
+  const categories: { id: TabCategory; label: string; icon: string }[] = [
+    { id: "general", label: "General", icon: "⚙️" },
+    { id: "appearance", label: "Appearance", icon: "🎨" },
+    { id: "directory", label: "Directory & Naming", icon: "📁" },
+    { id: "codec", label: "Format & Codec", icon: "🎧" },
+    { id: "network", label: "Network & Cookies", icon: "🌐" },
+    { id: "troubleshooting", label: "Troubleshooting", icon: "🛠️" },
+    { id: "about", label: "About & Parity", icon: "ℹ️" },
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 space-y-6 text-zinc-100 min-h-[75vh]">
       {/* Toast notification */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#A3D48D] text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Preferences auto-saved!</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-[#A3D48D] text-black font-mono font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
+          <span>✓ Preferences Saved!</span>
         </div>
       )}
 
-      {/* Title Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#27272A] pb-5">
+      {/* Screen Title & Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#323428] pb-5">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#A3D48D]/10 border border-[#A3D48D]/30 text-[#A3D48D] text-xs font-semibold uppercase tracking-wider mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#A3D48D]"></span>
-            Seal MD3 Preferences
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#202119] border border-[#323428] text-[#A3D48D] text-xs font-mono font-semibold tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-[#A3D48D]" />
+            Drizzle-Style Config Studio
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
             <span>Settings & Preferences</span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Configure default formats, audio codecs, SponsorBlock, network proxies, and Seal MD3 appearance.
+            Configure video quality defaults, Netscape cookies manager, proxy endpoints, and audio codecs.
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleResetAll}
-          className="self-start sm:self-center px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white bg-[#121215] hover:bg-zinc-800 border border-[#27272A] rounded-xl transition-all cursor-pointer"
+          className="self-start sm:self-center px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-[#202119] hover:bg-[#2A2B20] border border-[#323428] rounded-xl transition-all cursor-pointer"
         >
           Reset to Defaults
         </button>
       </div>
 
-      {/* Main Settings Layout (Sidebar + Content) */}
+      {/* Drizzle-Style Sidebar + Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Sidebar Nav */}
-        <div className="md:col-span-1 space-y-1 bg-[#121215] border border-[#27272A] p-2 rounded-2xl h-fit">
+        {/* Left Sidebar Category Tabs */}
+        <div className="md:col-span-1 space-y-1 bg-[#202119] border border-[#323428] p-2 rounded-2xl h-fit">
           {categories.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (
@@ -188,21 +127,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#A3D48D] text-black font-extrabold shadow-md shadow-[#A3D48D]/20"
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+                    ? "bg-[#A3D48D] text-black shadow-md"
+                    : "text-zinc-400 hover:text-white hover:bg-[#13140E]"
                 }`}
               >
-                {cat.icon}
+                <span>{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Content Panel */}
-        <div className="md:col-span-3 bg-[#121215] border border-[#27272A] rounded-2xl p-6 shadow-xl space-y-6">
+        {/* Right Main Content Panel */}
+        <div className="md:col-span-3 bg-[#202119] border border-[#323428] rounded-2xl p-6 shadow-2xl space-y-6">
           {/* GENERAL */}
           {activeCategory === "general" && (
             <div className="space-y-6">
@@ -212,7 +151,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
 
               <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
                     <h4 className="text-xs font-bold text-white">Default Video Quality</h4>
                     <p className="text-[11px] text-zinc-400">Preferred video resolution for auto-selection</p>
@@ -220,7 +159,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <select
                     value={settings.defaultQuality}
                     onChange={(e) => handleChange("defaultQuality", e.target.value)}
-                    className="bg-[#121215] border border-[#27272A] text-white text-xs font-semibold rounded-lg px-3 py-2 focus:outline-none focus:border-[#A3D48D]"
+                    className="bg-[#202119] border border-[#323428] text-white text-xs font-mono rounded-lg px-3 py-2 focus:outline-none focus:border-[#A3D48D]"
                   >
                     <option value="best">Best Available Quality</option>
                     <option value="1080p">1080p (Full HD)</option>
@@ -236,13 +175,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {activeCategory === "appearance" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-white mb-1">Appearance & Theme</h3>
+                <h3 className="text-base font-bold text-white mb-1">Appearance & Design System</h3>
                 <p className="text-xs text-zinc-400">Customize visual appearance and OLED dark mode options.</p>
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* OLED Dark Mode */}
-                <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
                     <h4 className="text-xs font-bold text-white">OLED Dark Mode</h4>
                     <p className="text-[11px] text-zinc-400">Use pitch black backgrounds (`#000000`) for OLED displays</p>
@@ -262,16 +200,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </button>
                 </div>
 
-                {/* Theme Palette Banner */}
-                <div className="p-4 bg-[#09090B] border border-[#27272A] rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-white">Seal MD3 Theme Preview</h4>
+                <div className="p-4 bg-[#13140E] border border-[#323428] rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-white">Color Palette Audit</h4>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#A3D48D] flex items-center justify-center font-bold text-black text-xs shadow-md">
+                    <div className="w-9 h-9 rounded-xl bg-[#A3D48D] flex items-center justify-center font-bold text-black text-xs font-mono">
                       MD3
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#A3D48D]">Lime Green Accent (`#A3D48D`)</p>
-                      <p className="text-[11px] text-zinc-400">Material Design 3 vibrant contrast system</p>
+                      <p className="text-xs font-bold text-[#A3D48D] font-mono">Lime Green Accent (`#A3D48D`)</p>
+                      <p className="text-[11px] text-zinc-400">Surface: `#13140E` • Card: `#202119` • Border: `#323428`</p>
                     </div>
                   </div>
                 </div>
@@ -288,21 +225,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
 
               <div className="space-y-4 pt-2">
-                <div className="space-y-2 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                  <label className="text-xs font-bold text-white">Output Template String</label>
+                <div className="space-y-2 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
+                  <label className="text-xs font-bold text-white font-mono">Output Template String</label>
                   <input
                     type="text"
                     value={settings.outputTemplate}
                     onChange={(e) => handleChange("outputTemplate", e.target.value)}
                     placeholder="%(title)s.%(ext)s"
-                    className="w-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-200 rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
+                    className="w-full bg-[#202119] border border-[#323428] text-xs font-mono text-white rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
                   />
-                  <p className="text-[11px] text-zinc-500">
-                    Standard yt-dlp syntax, e.g. <code className="text-zinc-400">%(title)s [%(id)s].%(ext)s</code>
+                  <p className="text-[11px] text-zinc-500 font-mono">
+                    Standard yt-dlp syntax, e.g. <code className="text-[#A3D48D]">%(title)s [%(id)s].%(ext)s</code>
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
                     <h4 className="text-xs font-bold text-white">Restrict Filenames</h4>
                     <p className="text-[11px] text-zinc-400">Restrict filenames to ASCII characters and avoid spaces</p>
@@ -334,19 +271,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* Audio Codec Picker */}
-                <div className="p-4 bg-[#09090B] border border-[#27272A] rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-white">Audio Codec</h4>
+                <div className="p-4 bg-[#13140E] border border-[#323428] rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-white">Preferred Audio Codec</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {(["mp3", "m4a", "flac", "opus"] as const).map((codec) => (
                       <button
                         key={codec}
                         type="button"
                         onClick={() => handleChange("audioCodec", codec)}
-                        className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
                           settings.audioCodec === codec
-                            ? "bg-[#A3D48D] text-black shadow-md shadow-[#A3D48D]/20"
-                            : "bg-[#121215] text-zinc-400 hover:text-white border border-[#27272A]"
+                            ? "bg-[#A3D48D] text-black shadow-md"
+                            : "bg-[#202119] text-zinc-400 hover:text-white border border-[#323428]"
                         }`}
                       >
                         {codec}
@@ -355,19 +291,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Audio Bitrate Picker */}
-                <div className="p-4 bg-[#09090B] border border-[#27272A] rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-white">Audio Bitrate</h4>
+                <div className="p-4 bg-[#13140E] border border-[#323428] rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-white">Target Audio Bitrate</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {(["128k", "192k", "320k"] as const).map((bitrate) => (
                       <button
                         key={bitrate}
                         type="button"
                         onClick={() => handleChange("audioBitrate", bitrate)}
-                        className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
                           settings.audioBitrate === bitrate
-                            ? "bg-[#A3D48D] text-black shadow-md shadow-[#A3D48D]/20"
-                            : "bg-[#121215] text-zinc-400 hover:text-white border border-[#27272A]"
+                            ? "bg-[#A3D48D] text-black shadow-md"
+                            : "bg-[#202119] text-zinc-400 hover:text-white border border-[#323428]"
                         }`}
                       >
                         {bitrate}
@@ -376,12 +311,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Toggles */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                     <div>
                       <h4 className="text-xs font-bold text-white">SponsorBlock Auto-Removal</h4>
-                      <p className="text-[11px] text-zinc-400">Automatically remove sponsors, intros, outros, and promos</p>
+                      <p className="text-[11px] text-zinc-400">Automatically skip sponsors, intros, outros, and promos</p>
                     </div>
                     <button
                       type="button"
@@ -398,7 +332,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                     <div>
                       <h4 className="text-xs font-bold text-white">Embed Subtitles</h4>
                       <p className="text-[11px] text-zinc-400">Embed available closed captions directly into output file</p>
@@ -418,7 +352,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                     <div>
                       <h4 className="text-xs font-bold text-white">Remux to MKV</h4>
                       <p className="text-[11px] text-zinc-400">Containerize downloaded video formats into MKV</p>
@@ -437,26 +371,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       />
                     </button>
                   </div>
-
-                  <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                    <div>
-                      <h4 className="text-xs font-bold text-white">Crop Artwork Square</h4>
-                      <p className="text-[11px] text-zinc-400">Crop embedded audio thumbnail artwork to 1:1 aspect ratio</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleChange("cropArtwork", !settings.cropArtwork)}
-                      className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${
-                        settings.cropArtwork ? "bg-[#A3D48D]" : "bg-zinc-800"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full bg-black transition-transform ${
-                          settings.cropArtwork ? "translate-x-6 bg-black" : "translate-x-0 bg-white"
-                        }`}
-                      />
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -471,61 +385,59 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* Netscape Cookies */}
-                <div className="space-y-2 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                  <label className="text-xs font-bold text-white">Netscape cookies.txt String</label>
+                {/* Netscape Cookies Manager */}
+                <div className="space-y-2 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
+                  <label className="text-xs font-bold text-white font-mono">Netscape cookies.txt Manager</label>
                   <textarea
                     rows={4}
                     value={settings.netscapeCookies}
                     onChange={(e) => handleChange("netscapeCookies", e.target.value)}
                     placeholder="# Netscape HTTP Cookie File&#10;.youtube.com TRUE / FALSE 0 SID..."
-                    className="w-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-300 rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
+                    className="w-full bg-[#202119] border border-[#323428] text-xs font-mono text-[#A3D48D] rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
                   />
-                  <p className="text-[11px] text-zinc-500">Pass exported Netscape cookies to bypass login or age restrictions.</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">Paste exported cookies to bypass age gates and login requirements.</p>
                 </div>
 
-                {/* Proxy URL */}
-                <div className="space-y-2 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                  <label className="text-xs font-bold text-white">HTTP / SOCKS5 Proxy URL</label>
+                {/* Proxy URL Input */}
+                <div className="space-y-2 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
+                  <label className="text-xs font-bold text-white font-mono">HTTP / SOCKS5 Proxy URL</label>
                   <input
                     type="text"
                     value={settings.proxyUrl}
                     onChange={(e) => handleChange("proxyUrl", e.target.value)}
                     placeholder="e.g. http://user:pass@127.0.0.1:8080"
-                    className="w-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-200 rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
+                    className="w-full bg-[#202119] border border-[#323428] text-xs font-mono text-white rounded-lg p-2.5 focus:outline-none focus:border-[#A3D48D]"
                   />
                 </div>
 
-                {/* Limits */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-2 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                    <label className="text-xs font-bold text-white">Max Filesize Limit</label>
+                  <div className="space-y-2 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
+                    <label className="text-xs font-bold text-white font-mono">Max Filesize Limit</label>
                     <input
                       type="text"
                       value={settings.maxFilesize}
                       onChange={(e) => handleChange("maxFilesize", e.target.value)}
                       placeholder="e.g. 50M or 1G"
-                      className="w-full bg-[#121215] border border-[#27272A] text-xs text-zinc-200 rounded-lg p-2 focus:outline-none focus:border-[#A3D48D]"
+                      className="w-full bg-[#202119] border border-[#323428] text-xs font-mono text-white rounded-lg p-2 focus:outline-none focus:border-[#A3D48D]"
                     />
                   </div>
 
-                  <div className="space-y-2 p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
-                    <label className="text-xs font-bold text-white">Download Rate Limit</label>
+                  <div className="space-y-2 p-4 bg-[#13140E] border border-[#323428] rounded-xl">
+                    <label className="text-xs font-bold text-white font-mono">Download Rate Limit</label>
                     <input
                       type="text"
                       value={settings.rateLimit}
                       onChange={(e) => handleChange("rateLimit", e.target.value)}
                       placeholder="e.g. 500K or 5M"
-                      className="w-full bg-[#121215] border border-[#27272A] text-xs text-zinc-200 rounded-lg p-2 focus:outline-none focus:border-[#A3D48D]"
+                      className="w-full bg-[#202119] border border-[#323428] text-xs font-mono text-white rounded-lg p-2 focus:outline-none focus:border-[#A3D48D]"
                     />
                   </div>
                 </div>
 
-                {/* Force IPv4 */}
-                <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
                     <h4 className="text-xs font-bold text-white">Force IPv4 Connection</h4>
-                    <p className="text-[11px] text-zinc-400">Make requests strictly over IPv4 (resolves IPv6 timeout issues)</p>
+                    <p className="text-[11px] text-zinc-400">Make requests strictly over IPv4 to bypass IPv6 timeouts</p>
                   </div>
                   <button
                     type="button"
@@ -550,15 +462,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-base font-bold text-white mb-1">Troubleshooting & Diagnostics</h3>
-                <p className="text-xs text-zinc-400">Test backend connectivity, toggle mock mode, and purge cached data.</p>
+                <p className="text-xs text-zinc-400">Test API server connectivity and toggle mock simulation mode.</p>
               </div>
 
               <div className="space-y-4 pt-2">
-                {/* Mock Mode Switch */}
-                <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
                     <h4 className="text-xs font-bold text-white">Mock Mode (Offline Simulation)</h4>
-                    <p className="text-[11px] text-zinc-400">Simulate media extraction without connecting to backend server</p>
+                    <p className="text-[11px] text-zinc-400">Simulate media extraction without backend network connection</p>
                   </div>
                   <button
                     type="button"
@@ -579,23 +490,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </button>
                 </div>
 
-                {/* Test API Endpoint */}
-                <div className="flex items-center justify-between p-4 bg-[#09090B] border border-[#27272A] rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-[#13140E] border border-[#323428] rounded-xl">
                   <div>
-                    <h4 className="text-xs font-bold text-white">Backend API Server Connectivity</h4>
-                    <p className="text-[11px] text-zinc-400">
-                      Endpoint: <code className="text-zinc-300">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}</code>
+                    <h4 className="text-xs font-bold text-white font-mono">Backend API Server Status</h4>
+                    <p className="text-[11px] font-mono text-zinc-400">
+                      URL: {process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
                     {apiStatus === "online" && (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#A3D48D]/10 text-[#A3D48D] border border-[#A3D48D]/30">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[#A3D48D]/10 text-[#A3D48D] border border-[#A3D48D]/30">
                         Online
                       </span>
                     )}
                     {apiStatus === "offline" && (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/30">
                         Unreachable
                       </span>
                     )}
@@ -604,9 +514,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       type="button"
                       onClick={handleTestApi}
                       disabled={apiStatus === "testing"}
-                      className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg border border-[#27272A] transition-colors cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#202119] hover:bg-[#2A2B20] text-white text-xs font-mono rounded-lg border border-[#323428] transition-colors cursor-pointer"
                     >
-                      {apiStatus === "testing" ? "Testing..." : "Test Connection"}
+                      {apiStatus === "testing" ? "Testing..." : "Test Ping"}
                     </button>
                   </div>
                 </div>
@@ -618,37 +528,37 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {activeCategory === "about" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-white mb-1">About Universal VideoDownloader</h3>
-                <p className="text-xs text-zinc-400">Next.js Web Client with Seal MD3 Design System.</p>
+                <h3 className="text-base font-bold text-white mb-1">About Seal MD3 VideoDownloader</h3>
+                <p className="text-xs text-zinc-400">Next.js Web Client with Seal MD3 Bento Design System.</p>
               </div>
 
-              <div className="p-5 bg-[#09090B] border border-[#27272A] rounded-xl space-y-4">
+              <div className="p-5 bg-[#13140E] border border-[#323428] rounded-xl space-y-4 font-mono text-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#A3D48D] flex items-center justify-center font-black text-black text-lg">
                     V
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white">VideoDownloader Web v2.5.0</h4>
-                    <p className="text-xs text-zinc-400">High-Parity yt-dlp Video & Audio Extractor</p>
+                    <p className="text-zinc-400 text-[11px]">Universal Media Extractor Studio</p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#27272A] grid grid-cols-2 gap-3 text-xs">
+                <div className="pt-3 border-t border-[#323428] grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-zinc-500">UI Framework:</span>
-                    <p className="font-semibold text-zinc-200">Next.js 15 App Router</p>
+                    <span className="text-zinc-500">Theme:</span>
+                    <p className="font-bold text-[#A3D48D]">Seal MD3 (`#A3D48D` Lime Green)</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Design System:</span>
-                    <p className="font-semibold text-[#A3D48D]">Seal MD3 (`#A3D48D` Lime Green)</p>
+                    <span className="text-zinc-500">Surface:</span>
+                    <p className="font-bold text-zinc-300">Dark `#13140E` / Card `#202119`</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Storage Engine:</span>
-                    <p className="font-semibold text-zinc-200">Browser LocalStorage</p>
+                    <span className="text-zinc-500">Engine:</span>
+                    <p className="font-bold text-zinc-300">yt-dlp Python Backend</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">yt-dlp Parity:</span>
-                    <p className="font-semibold text-emerald-400">100% Feature Complete</p>
+                    <span className="text-zinc-500">Parity:</span>
+                    <p className="font-bold text-[#A3D48D]">100% Mobile Parity</p>
                   </div>
                 </div>
               </div>

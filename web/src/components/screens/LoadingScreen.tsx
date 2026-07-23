@@ -9,19 +9,15 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   onCancel,
 }) => {
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col items-center justify-center p-4 sm:p-6 bg-[#09090B] text-zinc-100 min-h-[60vh]">
-      <div className="w-full bg-[#121215] border border-[#27272A] rounded-2xl p-8 shadow-2xl shadow-black/60 flex flex-col items-center text-center space-y-6">
-        {/* Royal Blue Spinner Container */}
+    <div className="w-full max-w-lg mx-auto flex flex-col items-center justify-center p-4 sm:p-6 text-zinc-100 min-h-[60vh]">
+      <div className="w-full bg-[#202119] border border-[#323428] rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center space-y-6">
+        {/* Lime Green Pulsing Aura & Spinner */}
         <div className="relative flex items-center justify-center w-20 h-20">
-          {/* Outer glowing pulsing aura */}
-          <div className="absolute inset-0 rounded-full bg-[#0B4DDE]/20 animate-ping opacity-75"></div>
-          
-          {/* Middle decorative ring */}
-          <div className="absolute inset-1 rounded-full border-2 border-[#0B4DDE]/30"></div>
+          <div className="absolute inset-0 rounded-full bg-[#A3D48D]/20 animate-ping opacity-75" />
+          <div className="absolute inset-1 rounded-full border-2 border-[#A3D48D]/30" />
 
-          {/* Main Royal Blue Spinner */}
           <svg
-            className="w-16 h-16 animate-spin text-[#0B4DDE]"
+            className="w-16 h-16 animate-spin text-[#A3D48D]"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -40,20 +36,19 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
             />
           </svg>
 
-          {/* Center icon / dot */}
-          <div className="absolute w-3 h-3 rounded-full bg-[#0B4DDE]"></div>
+          <div className="absolute w-3.5 h-3.5 rounded-full bg-[#A3D48D]" />
         </div>
 
         {/* Text Status */}
         <div className="space-y-2 max-w-sm">
-          <h2 className="text-xl font-bold text-white tracking-tight">{statusMessage}</h2>
-          <p className="text-xs sm:text-sm text-zinc-400">
-            Fetching title, duration, uploader, and available video & audio formats.
+          <h2 className="text-xl font-extrabold text-white tracking-tight">{statusMessage}</h2>
+          <p className="text-xs sm:text-sm text-zinc-400 font-mono">
+            Extracting metadata, video qualities, and audio formats with yt-dlp.
           </p>
 
           {url && (
-            <div className="mt-3 p-2 bg-[#09090B] border border-[#27272A] rounded-lg text-xs text-zinc-400 truncate max-w-xs mx-auto">
-              <span className="font-mono text-zinc-500">{url}</span>
+            <div className="mt-3 p-2 bg-[#13140E] border border-[#323428] rounded-lg text-xs text-[#A3D48D] font-mono truncate max-w-xs mx-auto">
+              <span>{url}</span>
             </div>
           )}
         </div>
@@ -63,7 +58,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-800 border border-[#27272A] rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-mono font-semibold text-zinc-400 hover:text-white bg-[#13140E] hover:bg-[#1A1C14] border border-[#323428] rounded-xl transition-colors cursor-pointer"
           >
             Cancel Analysis
           </button>

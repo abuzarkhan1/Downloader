@@ -6,15 +6,26 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "bento" | "glass" | "interactive";
+  glow?: boolean;
+}
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, variant = "bento", glow = true, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          "rounded-3xl border border-[#36392D] bg-[#202119] text-[#E3E3DC] shadow-xl shadow-black/40 p-6 transition-all duration-200",
+          "relative overflow-hidden rounded-3xl border border-[#36392D] bg-[#202119] text-[#E3E3DC] p-6 transition-all duration-300",
+          variant === "bento" &&
+            "shadow-2xl shadow-black/50 hover:border-[#A3D48D]/40 hover:shadow-[0_0_30px_rgba(163,212,141,0.08)] hover:-translate-y-0.5",
+          variant === "glass" &&
+            "backdrop-blur-md bg-[#202119]/80 shadow-xl border-[#36392D]/80",
+          variant === "interactive" &&
+            "cursor-pointer hover:border-[#A3D48D] hover:shadow-lg hover:shadow-[#A3D48D]/10 active:scale-[0.99]",
+          glow &&
+            "before:absolute before:-top-24 before:-left-24 before:w-48 before:h-48 before:bg-[#A3D48D]/5 before:rounded-full before:blur-3xl before:pointer-events-none",
           className
         )}
         {...props}
@@ -44,7 +55,10 @@ export const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("font-bold text-lg leading-none tracking-tight text-[#E3E3DC]", className)}
+    className={cn(
+      "font-bold text-lg leading-tight tracking-tight text-[#E3E3DC] flex items-center gap-2",
+      className
+    )}
     {...props}
   />
 ));
@@ -56,7 +70,7 @@ export const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-[#C6C8BC]", className)}
+    className={cn("text-sm text-[#C6C8BC]/80 font-normal leading-relaxed", className)}
     {...props}
   />
 ));
@@ -76,7 +90,10 @@ export const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center pt-4 border-t border-[#36392D]/60 mt-4", className)}
+    className={cn(
+      "flex items-center pt-4 border-t border-[#36392D]/60 mt-4 text-xs text-[#C6C8BC]",
+      className
+    )}
     {...props}
   />
 ));
