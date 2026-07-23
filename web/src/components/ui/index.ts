@@ -4,3 +4,4 @@ export * from "./Input";
 export * from "./PlatformBadge";
 export * from "./ProgressBar";
 export * from "./Tabs";
+export * from "./SealNavigation";

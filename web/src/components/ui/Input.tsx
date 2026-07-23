@@ -18,7 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="relative flex items-center w-full">
         {leftIcon && (
-          <div className="absolute left-3.5 flex items-center pointer-events-none text-[#A1A1AA]">
+          <div className="absolute left-3.5 flex items-center pointer-events-none text-[#C6C8BC]">
             {leftIcon}
           </div>
         )}
@@ -27,8 +27,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           disabled={disabled}
           className={cn(
-            "w-full h-12 bg-[#09090B] border border-[#27272A] rounded-xl px-4 font-mono text-sm text-[#FAFAFA] placeholder:text-[#A1A1AA]/60",
-            "transition-colors duration-150 focus:outline-none focus:border-[#0B4DDE] focus:ring-2 focus:ring-[#0B4DDE]/30",
+            "w-full h-12 bg-[#13140E] border border-[#36392D] rounded-2xl px-4 font-mono text-sm text-[#E3E3DC] placeholder:text-[#C6C8BC]/50",
+            "transition-colors duration-150 focus:outline-none focus:border-[#B4EB12] focus:ring-2 focus:ring-[#B4EB12]/30",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             leftIcon && "pl-10",
             rightIcon && "pr-10",
@@ -38,7 +38,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {rightIcon && (
-          <div className="absolute right-3.5 flex items-center text-[#A1A1AA]">
+          <div className="absolute right-3.5 flex items-center text-[#C6C8BC]">
             {rightIcon}
           </div>
         )}

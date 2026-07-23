@@ -70,15 +70,15 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
   const normalizedKey = platform.toLowerCase();
   const meta = platformMeta[normalizedKey] || {
     name: platform,
-    dotColor: "bg-[#0B4DDE]",
-    bgGlow: "shadow-[#0B4DDE]/20",
-    borderColor: "hover:border-[#0B4DDE]/40",
+    dotColor: "bg-[#B4EB12]",
+    bgGlow: "shadow-[#B4EB12]/20",
+    borderColor: "hover:border-[#B4EB12]/40",
   };
 
   const sizeClasses = {
     sm: "px-2.5 py-1 text-xs gap-1.5 rounded-lg",
     md: "px-3.5 py-1.5 text-sm gap-2 rounded-xl",
-    lg: "px-4 py-2 text-base gap-2.5 rounded-xl",
+    lg: "px-4 py-2 text-base gap-2.5 rounded-2xl",
   };
 
   const dotSizes = {
@@ -90,10 +90,10 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
   return (
     <div
       className={cn(
-        "inline-flex items-center font-medium border transition-all duration-200 select-none",
-        "bg-[#19191E] border-[#27272A] text-[#FAFAFA]",
+        "inline-flex items-center font-semibold border transition-all duration-200 select-none",
+        "bg-[#25271F] border-[#36392D] text-[#E3E3DC]",
         meta.borderColor,
-        isActive && `border-[#0B4DDE] bg-[#19191E] shadow-sm ${meta.bgGlow}`,
+        isActive && `border-[#B4EB12] bg-[#2F4D18] text-[#C6EE58] shadow-sm ${meta.bgGlow}`,
         sizeClasses[size],
         className
       )}

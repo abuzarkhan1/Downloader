@@ -44,7 +44,7 @@ export const Tabs: React.FC<TabsProps> = ({
   return (
     <div
       className={cn(
-        "inline-flex p-1 bg-[#09090B] border border-[#27272A] rounded-xl gap-1",
+        "inline-flex p-1 bg-[#13140E] border border-[#36392D] rounded-2xl gap-1",
         className
       )}
       role="tablist"
@@ -59,10 +59,10 @@ export const Tabs: React.FC<TabsProps> = ({
             aria-selected={isActive}
             onClick={() => onChange(option.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 select-none",
+              "flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B4EB12]",
               isActive
-                ? "bg-[#0B4DDE] text-white shadow-md shadow-[#0B4DDE]/25"
-                : "text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#19191E]"
+                ? "bg-[#B4EB12] text-[#13140E] shadow-md shadow-[#B4EB12]/20 font-bold"
+                : "text-[#C6C8BC] hover:text-[#E3E3DC] hover:bg-[#25271F]"
             )}
           >
             {option.icon}

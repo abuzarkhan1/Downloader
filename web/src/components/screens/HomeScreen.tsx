@@ -98,21 +98,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const activeError = validationError || errorMessage;
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 bg-[#09090B] text-zinc-100 min-h-[70vh]">
+    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 text-zinc-100 min-h-[65vh]">
       {/* Header Title & Subtitle */}
       <div className="text-center mb-8 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B4DDE]/10 border border-[#0B4DDE]/30 text-[#0B4DDE] text-xs font-semibold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-[#0B4DDE] animate-pulse"></span>
-          Universal Downloader
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#A3D48D]/10 border border-[#A3D48D]/30 text-[#A3D48D] text-xs font-semibold uppercase tracking-wider">
+          <span className="w-2 h-2 rounded-full bg-[#A3D48D] animate-pulse"></span>
+          Seal MD3 Universal Extractor
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
           Download Video & Audio <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-blue-400 to-[#0B4DDE] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#A3D48D] via-[#bbf0a7] to-emerald-400 bg-clip-text text-transparent">
             From Any Platform
           </span>
         </h1>
         <p className="text-sm sm:text-base text-zinc-400 max-w-lg mx-auto">
-          Paste your video link below to analyze and extract high-quality video and audio files instantly.
+          Paste your media link below to analyze and extract high-quality video and audio files instantly.
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 if (validationError) setValidationError(null);
               }}
               placeholder="Paste URL (e.g., https://www.youtube.com/watch?v=...)"
-              className="w-full bg-[#09090B] border border-[#27272A] text-white placeholder-zinc-500 text-sm sm:text-base rounded-xl pl-12 pr-24 py-3.5 focus:outline-none focus:border-[#0B4DDE] focus:ring-2 focus:ring-[#0B4DDE]/20 transition-all"
+              className="w-full bg-[#09090B] border border-[#27272A] text-white placeholder-zinc-500 text-sm sm:text-base rounded-xl pl-12 pr-24 py-3.5 focus:outline-none focus:border-[#A3D48D] focus:ring-2 focus:ring-[#A3D48D]/20 transition-all"
               disabled={isLoading}
               autoComplete="off"
             />
@@ -169,7 +169,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={handlePaste}
-                  className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 rounded-md border border-[#27272A] transition-colors"
+                  className="px-2.5 py-1 text-xs font-semibold text-[#A3D48D] hover:text-black bg-[#A3D48D]/10 hover:bg-[#A3D48D] rounded-md border border-[#A3D48D]/30 transition-all cursor-pointer"
                   title="Paste from clipboard"
                 >
                   Paste
@@ -192,15 +192,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit Button with Seal MD3 Lime Green */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 bg-[#0B4DDE] hover:bg-[#093ebd] active:scale-[0.99] text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-[#0B4DDE]/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-2 bg-[#A3D48D] hover:bg-[#92c57c] active:scale-[0.99] text-black font-extrabold py-3.5 px-6 rounded-xl shadow-lg shadow-[#A3D48D]/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <svg className="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 animate-spin text-black" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"
@@ -214,7 +214,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <>
                 <span>Analyze Link</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </>
             )}

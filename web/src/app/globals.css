@@ -1,44 +1,67 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090B;
-  --color-card: #121215;
-  --color-surface: #121215;
-  --color-secondary: #19191E;
-  --color-inset: #19191E;
-  --color-border: #27272A;
-  --color-input: #27272A;
-  --color-primary: #0B4DDE;
-  --color-primary-oklch: oklch(0.66 0.16 252);
-  --color-text-primary: #FAFAFA;
-  --color-text-muted: #A1A1AA;
+  --color-background: #13140E;
+  --color-background-alt: #1B1C18;
+  --color-card: #202119;
+  --color-surface: #202119;
+  --color-surface-container: #202119;
+  --color-surface-container-high: #25271F;
+  --color-surface-container-highest: #2B2C23;
+  --color-secondary: #25271F;
+  --color-inset: #1B1C18;
+  --color-border: #36392D;
+  --color-border-hover: #44483B;
+  --color-input: #36392D;
+  --color-primary: #B4EB12;
+  --color-primary-seed: #A3D48D;
+  --color-primary-container: #2F4D18;
+  --color-primary-container-alt: #38531D;
+  --color-on-primary-container: #C6EE58;
+  --color-text-primary: #E3E3DC;
+  --color-text-muted: #C6C8BC;
   --color-destructive: #FF5252;
-  --color-success: #22C55E;
+  --color-success: #B4EB12;
 
   --font-sans: var(--font-inter), var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
 
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
 }
 
 :root {
-  --background: #09090B;
-  --card: #121215;
-  --surface: #121215;
-  --secondary: #19191E;
-  --inset: #19191E;
-  --border: #27272A;
-  --input: #27272A;
-  --primary: #0B4DDE;
-  --text-primary: #FAFAFA;
-  --text-muted: #A1A1AA;
+  --background: #13140E;
+  --background-alt: #1B1C18;
+  --card: #202119;
+  --surface: #202119;
+  --surface-container: #202119;
+  --surface-container-high: #25271F;
+  --surface-container-highest: #2B2C23;
+  --secondary: #25271F;
+  --inset: #1B1C18;
+  --border: #36392D;
+  --border-hover: #44483B;
+  --input: #36392D;
+  --primary: #B4EB12;
+  --primary-seed: #A3D48D;
+  --primary-container: #2F4D18;
+  --primary-container-alt: #38531D;
+  --on-primary-container: #C6EE58;
+  --text-primary: #E3E3DC;
+  --text-muted: #C6C8BC;
   --destructive: #FF5252;
-  --success: #22C55E;
+  --success: #B4EB12;
 }
 
 body {
   background-color: var(--background);
   color: var(--text-primary);
   font-family: var(--font-sans);
+}
+
+::selection {
+  background-color: #B4EB12;
+  color: #13140E;
 }

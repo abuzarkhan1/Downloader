@@ -27,6 +27,21 @@ export interface DownloadRequestPayload {
   format_type: 'video' | 'audio';
   quality: string;
   url?: string;
+  remux_mkv?: boolean;
+  crop_artwork?: boolean;
+  embed_subtitles?: boolean;
+  cookies_str?: string;
+  proxy_url?: string;
+  start_time?: string;
+  end_time?: string;
+  max_filesize?: string;
+  rate_limit?: string;
+  restrict_filenames?: boolean;
+  force_ipv4?: boolean;
+  output_template?: string;
+  audio_codec?: 'mp3' | 'm4a' | 'flac' | 'opus' | string;
+  audio_bitrate?: '128k' | '192k' | '320k' | string;
+  sponsorblock_remove?: boolean;
 }
 
 export interface DownloadResponse {
@@ -158,19 +173,25 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
  * Falls back to mock mode if backend is unreachable or USE_MOCK is true.
  */
 export async function startDownload(
-  id: string,
-  format_type: 'video' | 'audio',
-  quality: string
+  payloadOrId: string | DownloadRequestPayload,
+  format_type?: 'video' | 'audio',
+  quality?: string,
+  options?: Partial<DownloadRequestPayload>
 ): Promise<DownloadResponse> {
+  const payload: DownloadRequestPayload =
+    typeof payloadOrId === 'string'
+      ? { id: payloadOrId, format_type: format_type || 'video', quality: quality || '1080p', ...options }
+      : payloadOrId;
+
   if (USE_MOCK) {
-    return getMockStartDownloadResponse(id, format_type, quality);
+    return getMockStartDownloadResponse(payload.id, payload.format_type, payload.quality);
   }
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, format_type, quality }),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -200,7 +221,7 @@ export async function startDownload(
       throw err;
     }
     console.warn('Backend unreachable for startDownload, falling back to mock mode:', err);
-    return getMockStartDownloadResponse(id, format_type, quality);
+    return getMockStartDownloadResponse(payload.id, payload.format_type, payload.quality);
   }
 }
 

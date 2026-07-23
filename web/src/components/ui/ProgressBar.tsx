@@ -38,29 +38,29 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     return (
       <div ref={ref} className={cn("w-full flex flex-col gap-1.5", className)} {...props}>
         {(label || showPercentage) && (
-          <div className="flex justify-between items-center text-xs font-mono text-[#A1A1AA]">
+          <div className="flex justify-between items-center text-xs font-mono text-[#C6C8BC]">
             {label ? <span>{label}</span> : <span />}
             {showPercentage && !isIndeterminate && (
-              <span>{Math.round(clampedProgress)}%</span>
+              <span className="text-[#B4EB12] font-semibold">{Math.round(clampedProgress)}%</span>
             )}
           </div>
         )}
         <div
           className={cn(
-            "w-full bg-[#09090B] border border-[#27272A] rounded-full overflow-hidden relative p-0.5",
+            "w-full bg-[#1B1C18] border border-[#36392D] rounded-full overflow-hidden relative p-0.5",
             heightClasses[size]
           )}
         >
           {isIndeterminate ? (
-            <div className="h-full bg-[#0B4DDE] rounded-full w-1/3 animate-pulse relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <div className="h-full bg-[#B4EB12] rounded-full w-1/3 animate-pulse relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
             </div>
           ) : (
             <div
-              className="h-full bg-[#0B4DDE] rounded-full transition-all duration-300 ease-out shadow-sm shadow-[#0B4DDE]/50 relative"
+              className="h-full bg-gradient-to-r from-[#A3D48D] to-[#B4EB12] rounded-full transition-all duration-300 ease-out shadow-sm shadow-[#B4EB12]/50 relative"
               style={{ width: `${clampedProgress}%` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
             </div>
           )}
         </div>

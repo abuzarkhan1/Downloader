@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { DownloadScreenProps } from "@/types";
 import { getDownloadStatus, DownloadStatusResponse } from "@/services/api";
+import { updateHistoryItemStatus } from "@/services/historyStorage";
 
 export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   downloadJobId,
@@ -52,7 +53,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
       const filename = `${safeTitle}.${ext}`;
 
       try {
-        // Attempt direct blob download for seamless file save prompt in Chrome/Safari
+        // Direct blob fetch for seamless download prompt
         const response = await fetch(fullUrl);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -71,7 +72,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         setHasDownloaded(true);
       } catch (err) {
         console.warn("Direct blob fetch download encountered issue, using fallback link:", err);
-        // Fallback: direct anchor download trigger
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = fullUrl;
@@ -110,11 +110,12 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           const resolvedFileUrl = data.file_url || `/api/v1/files/${downloadJobId}`;
           setFileUrl(resolvedFileUrl);
 
+          updateHistoryItemStatus(downloadJobId, "Completed", resolvedFileUrl);
+
           if (onComplete) {
             onComplete(resolvedFileUrl);
           }
 
-          // Trigger browser-native download automatically when ready (once)
           if (!autoTriggeredRef.current) {
             autoTriggeredRef.current = true;
             triggerNativeDownload(resolvedFileUrl);
@@ -123,7 +124,9 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         }
 
         if (currentStatus === "failed") {
-          setErrorMessage(data.error || "Processing failed on server. Please try again.");
+          const errStr = data.error || "Processing failed on server.";
+          setErrorMessage(errStr);
+          updateHistoryItemStatus(downloadJobId, "Failed");
           return;
         }
 
@@ -134,7 +137,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
       } catch (err: unknown) {
         if (!isMounted) return;
         console.error("Error polling download status:", err);
-        // Retry polling on temporary network glitch
         timerId = setTimeout(pollStatus, 2000);
       }
     };
@@ -147,18 +149,17 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
     };
   }, [downloadJobId, onComplete, triggerNativeDownload]);
 
-  // Format display helper
   const qualityDisplay = selectedFormat?.quality || "Best Quality";
   const extensionDisplay = (selectedFormat?.extension || (selectedFormat?.isAudio ? "MP3" : "MP4")).toUpperCase();
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 bg-[#09090B] text-zinc-100 min-h-[70vh]">
+    <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 text-zinc-100 min-h-[70vh]">
       {/* Navigation Header */}
       <div className="w-full flex items-center justify-between mb-6">
         <button
           type="button"
           onClick={handleBackToSearch}
-          className="flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white bg-[#121215] hover:bg-zinc-800 border border-[#27272A] rounded-xl transition-all cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white bg-[#121215] hover:bg-zinc-800 border border-[#27272A] rounded-xl transition-all cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -206,7 +207,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
               <h2 className="text-sm sm:text-base font-bold text-white truncate">{media.title}</h2>
               <p className="text-xs text-zinc-400 truncate">{media.uploader || "Unknown Creator"}</p>
               <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#0B4DDE]/20 text-[#0B4DDE] border border-[#0B4DDE]/30">
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#A3D48D]/20 text-[#A3D48D] border border-[#A3D48D]/30">
                   {extensionDisplay}
                 </span>
                 <span className="text-xs font-medium text-zinc-300">{qualityDisplay}</span>
@@ -220,7 +221,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
         {/* Status Badge & Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          {/* Status Badges */}
+          {/* Status Badges with Seal MD3 Lime Green */}
           {status === "queued" && (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
@@ -229,15 +230,15 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           )}
 
           {status === "processing" && (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0B4DDE] animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#A3D48D]/10 border border-[#A3D48D]/20 text-[#A3D48D] text-xs font-semibold uppercase tracking-wider">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#A3D48D] animate-pulse"></span>
               Processing Media ({Math.round(progressPercent)}%)
             </div>
           )}
 
           {status === "ready" && (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-              <svg className="w-4 h-4 fill-current text-emerald-400" viewBox="0 0 20 20">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#A3D48D]/20 border border-[#A3D48D]/40 text-[#A3D48D] text-xs font-bold uppercase tracking-wider">
+              <svg className="w-4 h-4 fill-current text-[#A3D48D]" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -282,15 +283,14 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-semibold">
               <span className="text-zinc-400">Conversion Progress</span>
-              <span className="text-[#0B4DDE] font-mono">{Math.round(progressPercent)}%</span>
+              <span className="text-[#A3D48D] font-mono font-bold">{Math.round(progressPercent)}%</span>
             </div>
 
             <div className="w-full bg-[#09090B] border border-[#27272A] rounded-full h-4 overflow-hidden p-0.5 relative">
               <div
-                className="h-full rounded-full transition-all duration-300 ease-out bg-gradient-to-r from-[#0B4DDE] to-blue-400 relative overflow-hidden"
+                className="h-full rounded-full transition-all duration-300 ease-out bg-gradient-to-r from-[#A3D48D] to-emerald-400 relative overflow-hidden"
                 style={{ width: `${Math.max(5, Math.min(100, progressPercent))}%` }}
               >
-                {/* Subtle animated shine effect */}
                 <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
               </div>
             </div>
@@ -299,16 +299,16 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-4 flex flex-col sm:flex-row gap-3">
-          {/* Main Open/Save / Re-Download Button */}
+          {/* Main Open/Save / Re-Download Button with Seal MD3 Lime Green */}
           <button
             type="button"
             onClick={() => fileUrl && triggerNativeDownload(fileUrl)}
             disabled={status !== "ready" || isTriggeringDownload}
-            className="flex-1 bg-[#0B4DDE] hover:bg-[#093ebd] active:scale-[0.99] text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-[#0B4DDE]/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            className="flex-1 bg-[#A3D48D] hover:bg-[#92c57c] active:scale-[0.99] text-black font-extrabold py-3.5 px-6 rounded-xl shadow-lg shadow-[#A3D48D]/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {isTriggeringDownload ? (
               <>
-                <svg className="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 animate-spin text-black" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"
@@ -324,7 +324,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
@@ -332,7 +332,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
               </>
             ) : (
               <>
-                <svg className="w-5 h-5 animate-spin opacity-70" fill="none" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 animate-spin opacity-70 text-black" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"

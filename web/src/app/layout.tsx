@@ -19,8 +19,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Universal Video Downloader",
-  description: "Fast, sleek, high-quality video and audio downloader for YouTube, TikTok, Instagram, and Facebook.",
+  title: "Seal Downloader — MD3 Universal Media Extractor",
+  description: "Fast, sleek, high-quality video and audio downloader inspired by Seal Material Design 3.",
 };
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${geistSans.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full bg-[#09090B] text-[#FAFAFA] flex flex-col font-sans selection:bg-[#0B4DDE] selection:text-white">
+      <body className="min-h-full bg-[#13140E] text-[#E3E3DC] flex flex-col font-sans selection:bg-[#B4EB12] selection:text-[#13140E]">
         <ErrorBoundary>
           {children}
           <DisclaimerModal />

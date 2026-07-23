@@ -40,7 +40,7 @@ export interface LoadingScreenProps {
 
 export interface ResultsScreenProps {
   media: MediaMetadata;
-  onDownload?: (format: FormatOption) => void;
+  onDownload?: (format: FormatOption, options?: Record<string, any>) => void;
   onReset?: () => void;
   analyzeUrl?: (url: string) => void;
 }
