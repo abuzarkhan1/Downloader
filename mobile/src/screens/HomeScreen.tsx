@@ -36,6 +36,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error, onNavi
   const [sponsorBlock, setSponsorBlock] = useState(true);
   const [subtitles, setSubtitles] = useState(false);
   const [preferredCodec, setPreferredCodec] = useState<AudioCodec>('MP3');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   const handleSubmit = () => {
     const trimmed = url.trim();
@@ -191,6 +193,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error, onNavi
                       </Text>
                     </TouchableOpacity>
                   ))}
+                </View>
+              </View>
+
+              <View style={[styles.clipRow, styles.topBorder]}>
+                <Text style={styles.toggleTitle}>Clip Range (Optional)</Text>
+                <View style={styles.clipInputsRow}>
+                  <View style={styles.clipInputGroup}>
+                    <Text style={styles.clipLabel}>Start Time</Text>
+                    <TextInput
+                      style={styles.clipInput}
+                      placeholder="00:00"
+                      placeholderTextColor="#8C8D82"
+                      value={startTime}
+                      onChangeText={setStartTime}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      testID="clip-start-input"
+                    />
+                  </View>
+                  <View style={styles.clipInputGroup}>
+                    <Text style={styles.clipLabel}>End Time</Text>
+                    <TextInput
+                      style={styles.clipInput}
+                      placeholder="02:30"
+                      placeholderTextColor="#8C8D82"
+                      value={endTime}
+                      onChangeText={setEndTime}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      testID="clip-end-input"
+                    />
+                  </View>
                 </View>
               </View>
             </View>
@@ -453,6 +487,35 @@ const styles = StyleSheet.create({
   codeChipTextActive: {
     color: DARK_BG,
     fontWeight: '700',
+  },
+  clipRow: {
+    flexDirection: 'column',
+    gap: 6,
+  },
+  clipInputsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  clipInputGroup: {
+    flex: 1,
+  },
+  clipLabel: {
+    fontSize: 11,
+    color: SUBTEXT_COLOR,
+    marginBottom: 4,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  clipInput: {
+    backgroundColor: DARK_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    borderRadius: 6,
+    height: 38,
+    paddingHorizontal: 10,
+    color: TEXT_COLOR,
+    fontSize: 12,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   analyzeButton: {
     backgroundColor: LIME_ACCENT,

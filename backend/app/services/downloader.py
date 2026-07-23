@@ -97,6 +97,29 @@ def apply_custom_flags(ydl_opts: Dict[str, Any], custom_flags: Optional[List[str
             ydl_opts["keepvideo"] = True
 
 
+try:
+    from yt_dlp.utils import download_range_func
+except ImportError:
+    download_range_func = None
+
+
+def parse_time_to_seconds(t_str: Optional[str]) -> Optional[float]:
+    """Parses time string ('HH:MM:SS', 'MM:SS', or 'SS') into total seconds."""
+    if not t_str:
+        return None
+    try:
+        parts = [float(p) for p in t_str.strip().split(":")]
+        if len(parts) == 1:
+            return parts[0]
+        elif len(parts) == 2:
+            return parts[0] * 60 + parts[1]
+        elif len(parts) == 3:
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    except Exception:
+        pass
+    return None
+
+
 def parse_quality_height(quality: str) -> Optional[str]:
     """Extract height integer string from quality parameter (e.g. '1080p' -> '1080')."""
     match = re.search(r'(\d+)', str(quality))
@@ -128,6 +151,13 @@ def execute_download(
     subtitle_lang: Optional[str] = "en",
     sponsorblock_remove: bool = False,
     custom_flags: Optional[List[str]] = None,
+    remux_mkv: bool = False,
+    crop_artwork: bool = True,
+    embed_subtitles: bool = False,
+    cookies_str: Optional[str] = None,
+    proxy_url: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
 ) -> str:
     """
     Executes yt-dlp download & ffmpeg postprocessing.
@@ -157,6 +187,37 @@ def execute_download(
         "writethumbnail": True,
     }
 
+    if proxy_url:
+        ydl_opts["proxy"] = proxy_url
+
+    if cookies_str:
+        cookie_file = job_dir / "cookies.txt"
+        cookie_file.write_text(cookies_str, encoding="utf-8")
+        ydl_opts["cookiefile"] = str(cookie_file)
+        if "http_headers" not in ydl_opts:
+            ydl_opts["http_headers"] = {}
+        ydl_opts["http_headers"]["Cookie"] = cookies_str
+
+    if start_time or end_time:
+        if download_range_func is not None:
+            s_sec = parse_time_to_seconds(start_time) or 0.0
+            e_sec = parse_time_to_seconds(end_time) or float("inf")
+            ydl_opts["download_ranges"] = download_range_func(None, [(s_sec, e_sec)])
+            ydl_opts["force_keyframes_at_cuts"] = True
+
+        ffmpeg_args = []
+        if start_time:
+            ffmpeg_args.extend(["-ss", str(start_time)])
+        if end_time:
+            ffmpeg_args.extend(["-to", str(end_time)])
+        if ffmpeg_args:
+            if "postprocessor_args" not in ydl_opts:
+                ydl_opts["postprocessor_args"] = {}
+            if isinstance(ydl_opts["postprocessor_args"], list):
+                ydl_opts["postprocessor_args"].extend(ffmpeg_args)
+            else:
+                ydl_opts["postprocessor_args"].setdefault("ffmpeg", []).extend(ffmpeg_args)
+
     ffmpeg_loc = ffmpeg_location or get_ffmpeg_location()
     if ffmpeg_loc:
         ydl_opts["ffmpeg_location"] = ffmpeg_loc
@@ -164,13 +225,15 @@ def execute_download(
     has_ffmpeg = is_ffmpeg_available(ffmpeg_loc)
     postprocessors = []
 
-    # Subtitle Extraction and Embedding (--write-sub, --write-auto-sub, --sub-format srt/vtt)
-    if extract_subtitles:
+    # Subtitle Extraction and Embedding (--write-sub, --write-auto-sub, --embed-subs)
+    if extract_subtitles or embed_subtitles:
         ydl_opts["writesubtitles"] = True
         ydl_opts["writeautomaticsub"] = True
         ydl_opts["subtitlesformat"] = "srt/vtt/best"
         lang = subtitle_lang if subtitle_lang else "en"
         ydl_opts["subtitleslangs"] = [lang, "en"]
+        if embed_subtitles:
+            ydl_opts["embedsubtitles"] = True
         if has_ffmpeg and format_type.lower() == "video":
             postprocessors.append({"key": "FFmpegEmbedSubtitle"})
 
@@ -190,6 +253,8 @@ def execute_download(
             })
             postprocessors.append({"key": "FFmpegMetadata", "add_metadata": True})
             postprocessors.append({"key": "FFmpegThumbnailsConvertor", "format": "jpg"})
+            if crop_artwork:
+                postprocessors.append({"key": "FFmpegCropArtwork"})
     else:
         # Video format selection
         height = parse_quality_height(quality)
@@ -198,7 +263,8 @@ def execute_download(
                 ydl_opts["format"] = f"bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height}]+bestaudio/best[height<={height}]/best"
             else:
                 ydl_opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
-            ydl_opts["merge_output_format"] = "mp4"
+            target_container = "mkv" if remux_mkv else "mp4"
+            ydl_opts["merge_output_format"] = target_container
             postprocessors.append({"key": "FFmpegMetadata", "add_metadata": True})
             postprocessors.append({"key": "FFmpegThumbnailsConvertor", "format": "jpg"})
         else:

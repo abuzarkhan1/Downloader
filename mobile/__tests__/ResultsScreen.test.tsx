@@ -41,5 +41,10 @@ describe('ResultsScreen Component', () => {
 
     const videoFormatItem = instance.findByProps({ testID: 'video-format-1080p' });
     expect(videoFormatItem).toBeTruthy();
+
+    const clipStartInput = instance.findByProps({ testID: 'clip-start-input' });
+    const clipEndInput = instance.findByProps({ testID: 'clip-end-input' });
+    expect(clipStartInput).toBeTruthy();
+    expect(clipEndInput).toBeTruthy();
   });
 });

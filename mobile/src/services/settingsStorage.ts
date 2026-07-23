@@ -11,6 +11,14 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   darkMode: 'dark',
   autoDownloadClipboard: false,
   downloadDirectory: '/Downloads/Seal',
+  remuxMkv: false,
+  cropArtwork: false,
+  embedSubtitles: false,
+  cookiesStr: '',
+  proxyUrl: '',
+  subtitleLang: 'en',
+  startTime: '',
+  endTime: '',
 };
 
 let AsyncStorage: any = null;

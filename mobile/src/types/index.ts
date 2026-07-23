@@ -41,6 +41,14 @@ export interface DownloadRequest {
   id: string;
   format_type: 'video' | 'audio';
   quality: string;
+  remuxMkv?: boolean;
+  cropArtwork?: boolean;
+  embedSubtitles?: boolean;
+  cookiesStr?: string;
+  proxyUrl?: string;
+  subtitleLang?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface DownloadJobResponse {
@@ -91,6 +99,14 @@ export interface UserSettings {
   darkMode: DarkModeVariant;
   autoDownloadClipboard: boolean;
   downloadDirectory: string;
+  remuxMkv?: boolean;
+  cropArtwork?: boolean;
+  embedSubtitles?: boolean;
+  cookiesStr?: string;
+  proxyUrl?: string;
+  subtitleLang?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface CommandTemplate {

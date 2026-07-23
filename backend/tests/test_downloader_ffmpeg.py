@@ -351,3 +351,180 @@ def test_mutagen_metadata_embedding(tmp_path):
     embed_metadata_with_mutagen(str(test_mp3), title="Test Song", uploader="Test Artist")
     assert test_mp3.exists()
 
+
+def test_downloader_remux_mkv(tmp_path):
+    job_id = "dl_remux_mkv_01"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "video.mkv"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"video mkv bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        res = execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "1080p",
+            remux_mkv=True
+        )
+        assert res == str(dummy_file)
+        assert captured_opts.get("merge_output_format") == "mkv"
+
+
+def test_downloader_embed_subtitles(tmp_path):
+    job_id = "dl_embed_subs_01"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"video bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "1080p",
+            embed_subtitles=True,
+            subtitle_lang="es"
+        )
+        assert captured_opts.get("embedsubtitles") is True
+        assert captured_opts.get("writesubtitles") is True
+        p_keys = [p.get("key") for p in captured_opts.get("postprocessors", [])]
+        assert "FFmpegEmbedSubtitle" in p_keys
+
+
+def test_downloader_crop_artwork(tmp_path):
+    job_id = "dl_crop_artwork_01"
+    job_store.create_download_job(job_id, "job_test", "audio", "192kbps", "https://example.com/audio")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "audio.mp3"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"mp3 bytes")
+        return mock_ydl
+
+    # Test with crop_artwork=True (default)
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/audio",
+            "audio",
+            "192kbps",
+            crop_artwork=True
+        )
+        p_keys = [p.get("key") for p in captured_opts.get("postprocessors", [])]
+        assert "FFmpegCropArtwork" in p_keys
+
+    captured_opts.clear()
+    # Test with crop_artwork=False
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/audio",
+            "audio",
+            "192kbps",
+            crop_artwork=False
+        )
+        p_keys = [p.get("key") for p in captured_opts.get("postprocessors", [])]
+        assert "FFmpegCropArtwork" not in p_keys
+
+
+def test_downloader_cookies_and_proxy(tmp_path):
+    job_id = "dl_cookies_proxy_01"
+    job_store.create_download_job(job_id, "job_test", "video", "720p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"video bytes")
+        return mock_ydl
+
+    cookies_content = "# Netscape HTTP Cookie File\n.youtube.com TRUE / FALSE 0 SID test_value\n"
+    proxy_url = "http://127.0.0.1:8080"
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "720p",
+            cookies_str=cookies_content,
+            proxy_url=proxy_url
+        )
+        assert captured_opts.get("proxy") == proxy_url
+        assert captured_opts.get("cookiefile") is not None
+        cookie_file_path = Path(captured_opts["cookiefile"])
+        assert cookie_file_path.exists()
+        assert cookie_file_path.read_text(encoding="utf-8") == cookies_content
+
+
+def test_downloader_video_clipping(tmp_path):
+    job_id = "dl_clipping_01"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"video bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "1080p",
+            start_time="00:00:10",
+            end_time="00:00:30"
+        )
+        assert "download_ranges" in captured_opts
+        pp_args = captured_opts.get("postprocessor_args", {})
+        ffmpeg_args = pp_args.get("ffmpeg", [])
+        assert "-ss" in ffmpeg_args
+        assert "00:00:10" in ffmpeg_args
+        assert "-to" in ffmpeg_args
+        assert "00:00:30" in ffmpeg_args
+
+

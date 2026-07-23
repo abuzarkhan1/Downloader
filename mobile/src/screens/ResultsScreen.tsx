@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -15,7 +16,7 @@ import { PlatformBadge } from '../components/PlatformBadge';
 
 interface ResultsScreenProps {
   data: AnalyzeResponse;
-  onSelectFormat: (formatType: 'video' | 'audio', quality: string) => void;
+  onSelectFormat: (formatType: 'video' | 'audio', quality: string, options?: { startTime?: string; endTime?: string }) => void;
   onBack: () => void;
 }
 
@@ -37,6 +38,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
   // Audio extraction options
   const [selectedCodec, setSelectedCodec] = useState<AudioCodec>('MP3');
+
+  // Video clipping options
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -136,6 +141,39 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </View>
         )}
 
+        {/* Video Clip Range Selector (Optional) */}
+        <View style={styles.clipBox}>
+          <Text style={styles.clipLabel}>VIDEO CLIPPING RANGE (OPTIONAL)</Text>
+          <View style={styles.clipInputsRow}>
+            <View style={styles.clipInputGroup}>
+              <Text style={styles.clipInputTag}>Start Time</Text>
+              <TextInput
+                style={styles.clipInput}
+                placeholder="00:00"
+                placeholderTextColor="#8C8D82"
+                value={startTime}
+                onChangeText={setStartTime}
+                autoCapitalize="none"
+                autoCorrect={false}
+                testID="clip-start-input"
+              />
+            </View>
+            <View style={styles.clipInputGroup}>
+              <Text style={styles.clipInputTag}>End Time</Text>
+              <TextInput
+                style={styles.clipInput}
+                placeholder="02:30"
+                placeholderTextColor="#8C8D82"
+                value={endTime}
+                onChangeText={setEndTime}
+                autoCapitalize="none"
+                autoCorrect={false}
+                testID="clip-end-input"
+              />
+            </View>
+          </View>
+        </View>
+
         {/* Format List */}
         <View style={styles.formatList}>
           {activeTab === 'video' ? (
@@ -156,7 +194,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                     <Text style={styles.sizeText}>~{fmt.filesize_mb.toFixed(1)} MB</Text>
                     <TouchableOpacity
                       style={styles.downloadButton}
-                      onPress={() => onSelectFormat('video', fmt.quality)}
+                      onPress={() => onSelectFormat('video', fmt.quality, { startTime, endTime })}
                       activeOpacity={0.85}
                       testID={`dl-btn-video-${fmt.quality}`}
                     >
@@ -185,7 +223,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   <Text style={styles.sizeText}>~{fmt.filesize_mb.toFixed(1)} MB</Text>
                   <TouchableOpacity
                     style={[styles.downloadButton, styles.downloadButtonAudio]}
-                    onPress={() => onSelectFormat('audio', fmt.quality)}
+                    onPress={() => onSelectFormat('audio', fmt.quality, { startTime, endTime })}
                     activeOpacity={0.85}
                     testID={`dl-btn-audio-${fmt.quality}`}
                   >
@@ -458,5 +496,45 @@ const styles = StyleSheet.create({
     color: SUBTEXT_COLOR,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  clipBox: {
+    backgroundColor: CARD_BG,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    marginBottom: 16,
+  },
+  clipLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: LIME_ACCENT,
+    letterSpacing: 1,
+    marginBottom: 8,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  clipInputsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  clipInputGroup: {
+    flex: 1,
+  },
+  clipInputTag: {
+    fontSize: 11,
+    color: SUBTEXT_COLOR,
+    marginBottom: 4,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  clipInput: {
+    backgroundColor: DARK_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    borderRadius: 6,
+    height: 38,
+    paddingHorizontal: 10,
+    color: TEXT_COLOR,
+    fontSize: 12,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

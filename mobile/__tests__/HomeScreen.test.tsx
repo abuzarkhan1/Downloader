@@ -11,8 +11,11 @@ describe('HomeScreen Component', () => {
       tree = renderer.create(<HomeScreen onAnalyze={onAnalyzeMock} />);
     });
 
-    const json = tree.toJSON();
-    expect(json).toBeTruthy();
+    const instance = tree.root;
+    const clipStartInput = instance.findByProps({ testID: 'clip-start-input' });
+    const clipEndInput = instance.findByProps({ testID: 'clip-end-input' });
+    expect(clipStartInput).toBeTruthy();
+    expect(clipEndInput).toBeTruthy();
   });
 
   test('displays error message when passed error prop', () => {

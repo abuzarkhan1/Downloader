@@ -34,10 +34,35 @@ describe('User Settings Storage Service', () => {
     expect(reloaded.audioCodec).toBe('FLAC');
   });
 
+  test('stores and retrieves new mobile parity preferences correctly', async () => {
+    const updated = await saveSettings({
+      remuxMkv: true,
+      cropArtwork: true,
+      embedSubtitles: true,
+      cookiesStr: '# Netscape HTTP Cookie File\n.youtube.com TRUE / FALSE 123456 session_id xyz',
+      proxyUrl: 'http://127.0.0.1:8080',
+      subtitleLang: 'es',
+      darkMode: 'oled',
+    });
+
+    expect(updated.remuxMkv).toBe(true);
+    expect(updated.cropArtwork).toBe(true);
+    expect(updated.embedSubtitles).toBe(true);
+    expect(updated.cookiesStr).toContain('session_id xyz');
+    expect(updated.proxyUrl).toBe('http://127.0.0.1:8080');
+    expect(updated.subtitleLang).toBe('es');
+    expect(updated.darkMode).toBe('oled');
+
+    const reloaded = await getSettings();
+    expect(reloaded.remuxMkv).toBe(true);
+    expect(reloaded.proxyUrl).toBe('http://127.0.0.1:8080');
+  });
+
   test('resets settings to default values', async () => {
-    await saveSettings({ audioCodec: 'OPUS', darkMode: 'oled' });
+    await saveSettings({ audioCodec: 'OPUS', darkMode: 'oled', remuxMkv: true });
     const reset = await resetSettings();
     expect(reset.audioCodec).toBe('MP3');
     expect(reset.darkMode).toBe('dark');
+    expect(reset.remuxMkv).toBe(false);
   });
 });

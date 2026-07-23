@@ -170,3 +170,37 @@ def test_download_request_payload_extended_fields():
         assert kwargs["sponsorblock_remove"] is True
         assert kwargs["custom_flags"] == ["--geo-bypass"]
 
+
+def test_download_request_payload_parity_fields():
+    job_store.register_analyze_job("job_parity123", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    
+    with patch("app.api.v1.download.dispatch_download_job") as mock_dispatch:
+        response = client.post(
+            "/api/v1/download",
+            json={
+                "id": "job_parity123",
+                "format_type": "video",
+                "quality": "1080p",
+                "remux_mkv": True,
+                "crop_artwork": False,
+                "embed_subtitles": True,
+                "cookies_str": "session=abc",
+                "proxy_url": "http://proxy.local:8080",
+                "start_time": "00:00:10",
+                "end_time": "00:00:30"
+            }
+        )
+        assert response.status_code == 202
+        data = response.json()
+        assert "download_job_id" in data
+        assert mock_dispatch.called
+        kwargs = mock_dispatch.call_args.kwargs
+        assert kwargs["remux_mkv"] is True
+        assert kwargs["crop_artwork"] is False
+        assert kwargs["embed_subtitles"] is True
+        assert kwargs["cookies_str"] == "session=abc"
+        assert kwargs["proxy_url"] == "http://proxy.local:8080"
+        assert kwargs["start_time"] == "00:00:10"
+        assert kwargs["end_time"] == "00:00:30"
+
+

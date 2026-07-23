@@ -22,5 +22,20 @@ describe('SettingsScreen Component', () => {
 
     const sponsorBlockSwitch = instance.findByProps({ testID: 'setting-sponsorblock-switch' });
     expect(sponsorBlockSwitch).toBeTruthy();
+
+    const cookiesInput = instance.findByProps({ testID: 'setting-cookies-input' });
+    expect(cookiesInput).toBeTruthy();
+
+    const remuxMkvSwitch = instance.findByProps({ testID: 'setting-remux-mkv-switch' });
+    expect(remuxMkvSwitch).toBeTruthy();
+
+    const cropArtworkSwitch = instance.findByProps({ testID: 'setting-crop-artwork-switch' });
+    expect(cropArtworkSwitch).toBeTruthy();
+
+    const subtitleLangBtn = instance.findByProps({ testID: 'setting-subtitle-lang-btn' });
+    expect(subtitleLangBtn).toBeTruthy();
+
+    const proxyInput = instance.findByProps({ testID: 'setting-proxy-input' });
+    expect(proxyInput).toBeTruthy();
   });
 });

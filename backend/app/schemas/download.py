@@ -12,6 +12,13 @@ class DownloadRequest(BaseModel):
     subtitle_lang: Optional[str] = Field("en", description="Subtitle language code")
     sponsorblock_remove: Optional[bool] = Field(False, description="Remove SponsorBlock segments")
     custom_flags: Optional[List[str]] = Field(default_factory=list, description="Safe custom yt-dlp flag templates")
+    remux_mkv: Optional[bool] = Field(False, description="Remux output video container to MKV")
+    crop_artwork: Optional[bool] = Field(True, description="Crop artwork to square for audio thumbnails")
+    embed_subtitles: Optional[bool] = Field(False, description="Embed subtitles into video")
+    cookies_str: Optional[str] = Field(None, description="Netscape format cookie file content or string")
+    proxy_url: Optional[str] = Field(None, description="Proxy server URL")
+    start_time: Optional[str] = Field(None, description="Clip start time (e.g. HH:MM:SS or SS)")
+    end_time: Optional[str] = Field(None, description="Clip end time (e.g. HH:MM:SS or SS)")
 
 DownloadRequestPayload = DownloadRequest
 

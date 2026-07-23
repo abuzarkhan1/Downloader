@@ -19,6 +19,13 @@ def download_media_task(
     subtitle_lang: Optional[str] = "en",
     sponsorblock_remove: bool = False,
     custom_flags: Optional[List[str]] = None,
+    remux_mkv: bool = False,
+    crop_artwork: bool = True,
+    embed_subtitles: bool = False,
+    cookies_str: Optional[str] = None,
+    proxy_url: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
 ):
     """Celery worker task to process a media download job."""
     logger.info(f"[Celery Worker] Starting download task for job: {download_job_id}")
@@ -34,6 +41,13 @@ def download_media_task(
             subtitle_lang=subtitle_lang,
             sponsorblock_remove=sponsorblock_remove,
             custom_flags=custom_flags,
+            remux_mkv=remux_mkv,
+            crop_artwork=crop_artwork,
+            embed_subtitles=embed_subtitles,
+            cookies_str=cookies_str,
+            proxy_url=proxy_url,
+            start_time=start_time,
+            end_time=end_time,
         )
     except Exception as e:
         logger.error(f"[Celery Worker] Error executing download job {download_job_id}: {e}")
@@ -49,6 +63,13 @@ def run_download_job(
     subtitle_lang: Optional[str] = "en",
     sponsorblock_remove: bool = False,
     custom_flags: Optional[List[str]] = None,
+    remux_mkv: bool = False,
+    crop_artwork: bool = True,
+    embed_subtitles: bool = False,
+    cookies_str: Optional[str] = None,
+    proxy_url: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
 ):
     """Local fallback runner (FastAPI BackgroundTasks or thread pool execution)."""
     logger.info(f"[Local BackgroundTask] Starting download task for job: {download_job_id}")
@@ -64,6 +85,13 @@ def run_download_job(
             subtitle_lang=subtitle_lang,
             sponsorblock_remove=sponsorblock_remove,
             custom_flags=custom_flags,
+            remux_mkv=remux_mkv,
+            crop_artwork=crop_artwork,
+            embed_subtitles=embed_subtitles,
+            cookies_str=cookies_str,
+            proxy_url=proxy_url,
+            start_time=start_time,
+            end_time=end_time,
         )
     except Exception as e:
         logger.error(f"[Local BackgroundTask] Error executing download job {download_job_id}: {e}")
@@ -80,6 +108,13 @@ def dispatch_download_job(
     subtitle_lang: Optional[str] = "en",
     sponsorblock_remove: bool = False,
     custom_flags: Optional[List[str]] = None,
+    remux_mkv: bool = False,
+    crop_artwork: bool = True,
+    embed_subtitles: bool = False,
+    cookies_str: Optional[str] = None,
+    proxy_url: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
 ):
     """
     Dispatches download job:
@@ -99,6 +134,13 @@ def dispatch_download_job(
             subtitle_lang,
             sponsorblock_remove,
             custom_flags,
+            remux_mkv,
+            crop_artwork,
+            embed_subtitles,
+            cookies_str,
+            proxy_url,
+            start_time,
+            end_time,
         )
     else:
         logger.info(f"Dispatching download job {download_job_id} via FastAPI BackgroundTasks.")
@@ -114,5 +156,12 @@ def dispatch_download_job(
             subtitle_lang,
             sponsorblock_remove,
             custom_flags,
+            remux_mkv,
+            crop_artwork,
+            embed_subtitles,
+            cookies_str,
+            proxy_url,
+            start_time,
+            end_time,
         )
 

@@ -45,6 +45,13 @@ async def request_download(payload: DownloadRequest, background_tasks: Backgroun
         subtitle_lang=payload.subtitle_lang or "en",
         sponsorblock_remove=payload.sponsorblock_remove or False,
         custom_flags=payload.custom_flags or [],
+        remux_mkv=payload.remux_mkv or False,
+        crop_artwork=payload.crop_artwork if payload.crop_artwork is not None else True,
+        embed_subtitles=payload.embed_subtitles or False,
+        cookies_str=payload.cookies_str,
+        proxy_url=payload.proxy_url,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
     )
 
 
