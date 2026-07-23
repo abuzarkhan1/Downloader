@@ -11,6 +11,7 @@ import {
 
 interface LoadingScreenProps {
   message?: string;
+  url?: string;
 }
 
 // oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE

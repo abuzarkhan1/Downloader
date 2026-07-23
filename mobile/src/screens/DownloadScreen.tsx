@@ -16,7 +16,7 @@ import { getDownloadStatus } from '../services/api';
 import { CustomErrorModal } from '../components/CustomErrorModal';
 
 interface DownloadScreenProps {
-  downloadJobId?: string;
+  downloadJobId?: string | null;
   statusData?: DownloadStatusResponse;
   selectedQuality?: string;
   formatType?: 'video' | 'audio';
@@ -72,7 +72,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
         if (res.status === 'ready' || res.status === 'failed') {
           if (res.status === 'failed') {
-            setErrorMsg(res.message || res.error_message || 'Download failed. Please try again.');
+            setErrorMsg((res as any).message || res.error_message || 'Download failed. Please try again.');
           }
           return;
         }

@@ -14,6 +14,8 @@ import { DownloadScreen } from './src/screens/DownloadScreen';
 import { DisclaimerModal } from './src/components/DisclaimerModal';
 import { CustomErrorModal } from './src/components/CustomErrorModal';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { QuickShareSheet } from './src/components/QuickShareSheet';
+import { getInitialShareUrl, subscribeToShareIntents } from './src/services/shareIntent';
 import { getDisclaimerAcceptedAt } from './src/services/storage';
 
 export default function App() {
@@ -22,6 +24,10 @@ export default function App() {
   const [targetUrl, setTargetUrl] = useState('');
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeData, setAnalyzeData] = useState<AnalyzeResponse | null>(null);
+
+  // Quick Share Intent state
+  const [quickShareVisible, setQuickShareVisible] = useState(false);
+  const [quickShareUrl, setQuickShareUrl] = useState('');
 
   // Global custom error modal state
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -38,6 +44,32 @@ export default function App() {
       }
     }
     checkDisclaimer();
+  }, []);
+
+  // Handle initial and background incoming share intents
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkInitialShare() {
+      const url = await getInitialShareUrl();
+      if (url && isMounted) {
+        setQuickShareUrl(url);
+        setQuickShareVisible(true);
+      }
+    }
+    checkInitialShare();
+
+    const unsubscribe = subscribeToShareIntents((url: string) => {
+      if (isMounted && url) {
+        setQuickShareUrl(url);
+        setQuickShareVisible(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // Download state
@@ -160,6 +192,17 @@ export default function App() {
           message={errorModalMsg}
           errorDetail={errorModalDetail}
           onDismiss={() => setErrorModalVisible(false)}
+        />
+
+        <QuickShareSheet
+          visible={quickShareVisible}
+          sharedUrl={quickShareUrl}
+          onClose={() => setQuickShareVisible(false)}
+          onOpenMainApp={() => setQuickShareVisible(false)}
+          onAnalyze={(url: string) => {
+            setQuickShareVisible(false);
+            handleAnalyze(url);
+          }}
         />
 
         {currentScreen === 'Home' && (
