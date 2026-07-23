@@ -65,7 +65,7 @@ export class ApiError extends Error {
 export function formatErrorMessage(errorCode: ErrorCode | string): string {
   switch (errorCode) {
     case 'UNSUPPORTED_URL':
-      return 'The provided URL is not supported. Supported platforms are YouTube, TikTok, and Instagram.';
+      return 'The provided URL is not supported. Supported platforms are YouTube, TikTok, Instagram, and Facebook.';
     case 'PRIVATE_CONTENT':
       return 'This content is private or restricted and cannot be downloaded.';
     case 'RATE_LIMITED':

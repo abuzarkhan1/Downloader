@@ -31,7 +31,7 @@ def analyze_media(payload: AnalyzeRequest):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error_code": "UNSUPPORTED_URL",
-                "message": "The provided URL is not supported. Supported platforms are YouTube, TikTok, and Instagram.",
+                "message": "The provided URL is not supported. Supported platforms are YouTube, TikTok, Instagram, and Facebook.",
             },
         )
 

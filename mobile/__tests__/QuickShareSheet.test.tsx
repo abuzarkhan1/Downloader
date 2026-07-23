@@ -1,17 +1,8 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
-import { QuickShareSheet } from '../src/components/QuickShareSheet';
+import { QuickShareSheet, detectPlatformFromUrl } from '../src/components/QuickShareSheet';
 import * as apiModule from '../src/services/api';
 import { AnalyzeResponse } from '../src/types';
-
-jest.mock('../src/services/api', () => ({
-  detectPlatform: jest.fn().mockReturnValue('youtube'),
-  analyzeUrl: jest.fn(),
-  startDownload: jest.fn(),
-  getDownloadStatus: jest.fn(),
-  downloadAndSaveMedia: jest.fn().mockResolvedValue('/mock/path/video.mp4'),
-  formatErrorMessage: jest.fn().mockReturnValue('Formatted Error'),
-}));
 
 const mockAnalyzeData: AnalyzeResponse = {
   id: 'job_test_123',
@@ -29,125 +20,182 @@ const mockAnalyzeData: AnalyzeResponse = {
   ],
 };
 
-describe('QuickShareSheet Component', () => {
+describe('QuickShareSheet Component & Intent Integration', () => {
+  let analyzeSpy: jest.SpyInstance;
+  let startDownloadSpy: jest.SpyInstance;
+  let getStatusSpy: jest.SpyInstance;
+
   beforeEach(() => {
-    jest.clearAllMocks();
     jest.useFakeTimers();
+    analyzeSpy = jest.spyOn(apiModule, 'analyzeUrl').mockResolvedValue(mockAnalyzeData);
+    startDownloadSpy = jest.spyOn(apiModule, 'startDownload').mockResolvedValue({
+      download_job_id: 'dl_job_999',
+      status: 'queued',
+    });
+    getStatusSpy = jest.spyOn(apiModule, 'getDownloadStatus').mockResolvedValue({
+      status: 'processing',
+      progress_percent: 45,
+    });
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
-  test('does not render when visible is false', () => {
-    let tree: any;
-    act(() => {
-      tree = renderer.create(
-        <QuickShareSheet
-          visible={false}
-          sharedUrl="https://youtube.com/watch?v=123"
-          onClose={jest.fn()}
-          onOpenMainApp={jest.fn()}
-        />
-      );
+  describe('detectPlatformFromUrl', () => {
+    test('correctly identifies platforms from URL strings', () => {
+      expect(detectPlatformFromUrl('https://youtube.com/watch?v=123')).toBe('youtube');
+      expect(detectPlatformFromUrl('https://tiktok.com/@user/video/123')).toBe('tiktok');
+      expect(detectPlatformFromUrl('https://instagram.com/p/123')).toBe('instagram');
+      expect(detectPlatformFromUrl('https://facebook.com/watch/?v=123')).toBe('facebook');
+      expect(detectPlatformFromUrl('https://example.com/video.mp4')).toBe('unknown');
     });
-    expect(tree.toJSON()).toBeNull();
   });
 
-  test('auto-triggers analyzeUrl and renders media info + format options when visible', async () => {
-    (apiModule.analyzeUrl as jest.Mock).mockResolvedValue(mockAnalyzeData);
-
-    const onCloseMock = jest.fn();
-    const onOpenMainAppMock = jest.fn();
-    let tree: any;
-
-    await act(async () => {
-      tree = renderer.create(
-        <QuickShareSheet
-          visible={true}
-          sharedUrl="https://youtube.com/watch?v=123"
-          onClose={onCloseMock}
-          onOpenMainApp={onOpenMainAppMock}
-        />
-      );
+  describe('Rendering', () => {
+    test('does not render when visible is false', () => {
+      let tree: any;
+      act(() => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={false}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={jest.fn()}
+            onOpenMainApp={jest.fn()}
+          />
+        );
+      });
+      expect(tree.toJSON()).toBeNull();
     });
 
-    expect(apiModule.analyzeUrl).toHaveBeenCalledWith('https://youtube.com/watch?v=123');
+    test('renders sheet container and triggers URL analysis when visible', async () => {
+      const onCloseMock = jest.fn();
+      let tree: any;
 
-    const instance = tree.root;
-    const sheetModal = instance.findByProps({ testID: 'quick-share-sheet' });
-    expect(sheetModal).toBeTruthy();
+      await act(async () => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={true}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={onCloseMock}
+          />
+        );
+      });
 
-    const format1080p = instance.findByProps({ testID: 'format-option-1080p' });
-    expect(format1080p).toBeTruthy();
+      expect(analyzeSpy).toHaveBeenCalledWith('https://youtube.com/watch?v=123');
+
+      const instance = tree.root;
+      const sheetModal = instance.findByProps({ testID: 'quick-share-sheet' });
+      expect(sheetModal).toBeTruthy();
+    });
   });
 
-  test('triggers startDownload and polls progress on pressing Download Now', async () => {
-    (apiModule.analyzeUrl as jest.Mock).mockResolvedValue(mockAnalyzeData);
-    (apiModule.startDownload as jest.Mock).mockResolvedValue({
-      download_job_id: 'dl_job_999',
-      status: 'queued',
-    });
-    (apiModule.getDownloadStatus as jest.Mock).mockResolvedValue({
-      status: 'processing',
-      progress_percent: 45,
-    });
+  describe('URL Analysis & Format Selection', () => {
+    test('renders video and audio format choices and allows format selection', async () => {
+      const onSelectFormatMock = jest.fn();
+      let tree: any;
 
-    let tree: any;
-    await act(async () => {
-      tree = renderer.create(
-        <QuickShareSheet
-          visible={true}
-          sharedUrl="https://youtube.com/watch?v=123"
-          onClose={jest.fn()}
-          onOpenMainApp={jest.fn()}
-        />
-      );
-    });
+      await act(async () => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={true}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={jest.fn()}
+            onSelectFormat={onSelectFormatMock}
+          />
+        );
+      });
 
-    const instance = tree.root;
-    const downloadBtn = instance.findByProps({ testID: 'quick-share-download-btn' });
+      const instance = tree.root;
+      const format1080p = instance.findByProps({ testID: 'format-option-1080p' });
+      expect(format1080p).toBeTruthy();
 
-    await act(async () => {
-      await downloadBtn.props.onPress();
+      await act(async () => {
+        format1080p.props.onPress();
+      });
     });
 
-    expect(apiModule.startDownload).toHaveBeenCalledWith('job_test_123', 'video', '1080p');
+    test('triggers startDownload and polls status on pressing Download Now', async () => {
+      let tree: any;
+      await act(async () => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={true}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={jest.fn()}
+          />
+        );
+      });
 
-    // Fast forward timer to trigger polling
-    await act(async () => {
-      jest.advanceTimersByTime(850);
+      const instance = tree.root;
+      const downloadBtn = instance.findByProps({ testID: 'quick-share-download-btn' });
+
+      await act(async () => {
+        await downloadBtn.props.onPress();
+      });
+
+      expect(startDownloadSpy).toHaveBeenCalledWith('job_test_123', 'video', '1080p');
+
+      await act(async () => {
+        jest.advanceTimersByTime(850);
+      });
+
+      expect(getStatusSpy).toHaveBeenCalledWith('dl_job_999');
+
+      const progressText = instance.findByProps({ testID: 'quick-share-progress-text' });
+      expect(progressText.props.children.join('')).toBe('45%');
     });
-
-    expect(apiModule.getDownloadStatus).toHaveBeenCalledWith('dl_job_999');
-
-    const progressText = instance.findByProps({ testID: 'quick-share-progress-text' });
-    expect(progressText.props.children.join('')).toBe('45%');
   });
 
-  test('calls onOpenMainApp when Open Full App is pressed', async () => {
-    (apiModule.analyzeUrl as jest.Mock).mockResolvedValue(mockAnalyzeData);
-    const onOpenMainAppMock = jest.fn();
+  describe('Closing Actions', () => {
+    test('triggers onClose when close button is pressed', async () => {
+      const onCloseMock = jest.fn();
+      let tree: any;
 
-    let tree: any;
-    await act(async () => {
-      tree = renderer.create(
-        <QuickShareSheet
-          visible={true}
-          sharedUrl="https://youtube.com/watch?v=123"
-          onClose={jest.fn()}
-          onOpenMainApp={onOpenMainAppMock}
-        />
-      );
+      await act(async () => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={true}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={onCloseMock}
+          />
+        );
+      });
+
+      const instance = tree.root;
+      const closeBtn = instance.findByProps({ testID: 'quick-share-close-btn' });
+
+      act(() => {
+        closeBtn.props.onPress();
+      });
+
+      expect(onCloseMock).toHaveBeenCalledTimes(1);
     });
 
-    const instance = tree.root;
-    const openAppBtn = instance.findByProps({ testID: 'quick-share-open-app-btn' });
+    test('calls onOpenMainApp when Open Full App button is pressed', async () => {
+      const onOpenMainAppMock = jest.fn();
+      let tree: any;
 
-    act(() => {
-      openAppBtn.props.onPress();
+      await act(async () => {
+        tree = renderer.create(
+          <QuickShareSheet
+            visible={true}
+            sharedUrl="https://youtube.com/watch?v=123"
+            onClose={jest.fn()}
+            onOpenMainApp={onOpenMainAppMock}
+          />
+        );
+      });
+
+      const instance = tree.root;
+      const openAppBtn = instance.findByProps({ testID: 'quick-share-open-app-btn' });
+
+      act(() => {
+        openAppBtn.props.onPress();
+      });
+
+      expect(onOpenMainAppMock).toHaveBeenCalledTimes(1);
     });
-
-    expect(onOpenMainAppMock).toHaveBeenCalledTimes(1);
   });
 });
