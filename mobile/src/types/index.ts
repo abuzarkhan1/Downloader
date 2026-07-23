@@ -57,4 +57,47 @@ export interface DownloadStatusResponse {
   local_uri?: string;
 }
 
-export type ScreenName = 'Home' | 'Loading' | 'Results' | 'Download';
+export type ScreenName = 'Home' | 'Loading' | 'Results' | 'Download' | 'History' | 'Templates' | 'Settings';
+
+export type AudioCodec = 'MP3' | 'M4A' | 'FLAC' | 'OPUS';
+export type AudioBitrate = '128k' | '192k' | '320k';
+export type DarkModeVariant = 'dark' | 'dim' | 'oled';
+
+export type DownloadHistoryStatus = 'completed' | 'processing' | 'failed';
+
+export interface DownloadHistoryItem {
+  id: string;
+  title: string;
+  url?: string;
+  platform?: Platform;
+  uploader?: string;
+  thumbnail?: string;
+  filePath?: string;
+  format: 'video' | 'audio';
+  quality: string;
+  status: DownloadHistoryStatus;
+  timestamp: string;
+  filesize_mb?: number;
+  duration_seconds?: number;
+  errorMessage?: string;
+}
+
+export interface UserSettings {
+  defaultQuality: string;
+  audioCodec: AudioCodec;
+  audioBitrate: AudioBitrate;
+  sponsorBlock: boolean;
+  subtitles: boolean;
+  darkMode: DarkModeVariant;
+  autoDownloadClipboard: boolean;
+  downloadDirectory: string;
+}
+
+export interface CommandTemplate {
+  id: string;
+  name: string;
+  description: string;
+  flags: string;
+  isCustom?: boolean;
+}
+

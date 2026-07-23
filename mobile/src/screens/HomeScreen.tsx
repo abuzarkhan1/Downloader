@@ -9,20 +9,33 @@ import {
   StatusBar,
   ScrollView,
   KeyboardAvoidingView,
+  Switch,
   Platform as RNPlatform,
 } from 'react-native';
+import { AudioCodec } from '../types';
 
 interface HomeScreenProps {
   onAnalyze: (url: string) => void;
   error?: string | null;
+  onNavigate?: (screen: 'History' | 'Templates' | 'Settings') => void;
 }
 
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
+const LIME_ACCENT = '#A3D48D';
+const DARK_BG = '#1B1C18';
+const SURFACE_BG = '#23241F';
+const CARD_BG = '#2D2E28';
+const BORDER_COLOR = '#3F4139';
+const TEXT_COLOR = '#FAFAFA';
+const SUBTEXT_COLOR = '#C7C8BE';
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error, onNavigate }) => {
   const [url, setUrl] = useState('');
   const [inputError, setInputError] = useState<string | null>(null);
+
+  // Quick settings toggles on Home
+  const [sponsorBlock, setSponsorBlock] = useState(true);
+  const [subtitles, setSubtitles] = useState(false);
+  const [preferredCodec, setPreferredCodec] = useState<AudioCodec>('MP3');
 
   const handleSubmit = () => {
     const trimmed = url.trim();
@@ -36,15 +49,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#09090B" />
+      <StatusBar barStyle="light-content" backgroundColor={DARK_BG} />
 
       {/* Top Header Navigation */}
       <View style={styles.headerBar}>
         <View style={styles.brandRow}>
-          <Text style={styles.headerTitle}>Media Downloader</Text>
+          <Text style={styles.headerTitle}>Seal Video Downloader</Text>
         </View>
         <View style={styles.versionBadge}>
-          <Text style={styles.versionText}>v1.0</Text>
+          <Text style={styles.versionText}>MD3 v1.0</Text>
         </View>
       </View>
 
@@ -55,9 +68,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <Text style={styles.heroTitle}>Universal Media Downloader</Text>
+            <Text style={styles.heroTitle}>Seal Media Extractor</Text>
             <Text style={styles.heroSubtitle}>
-              Analyze and extract high-definition video formats or audio files for offline archiving.
+              Universal video downloader & audio extractor powered by yt-dlp.
             </Text>
           </View>
 
@@ -65,31 +78,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionHeaderLabel}>SUPPORTED PLATFORMS</Text>
             <View style={styles.platformRow}>
-              {/* YouTube Tag */}
               <View style={styles.platformTag}>
                 <View style={[styles.dot, styles.ytDot]} />
                 <Text style={styles.platformTagText}>YouTube</Text>
               </View>
-
-              {/* TikTok Tag */}
               <View style={styles.platformTag}>
                 <View style={[styles.dot, styles.ttDot]} />
                 <Text style={styles.platformTagText}>TikTok</Text>
               </View>
-
-              {/* Instagram Tag */}
               <View style={styles.platformTag}>
                 <View style={[styles.dot, styles.igDot]} />
                 <Text style={styles.platformTagText}>Instagram</Text>
               </View>
-
-              {/* Facebook Tag */}
               <View style={styles.platformTag}>
                 <View style={[styles.dot, styles.fbDot]} />
                 <Text style={styles.platformTagText}>Facebook</Text>
               </View>
-
-              {/* X (Twitter) Tag */}
               <View style={styles.platformTag}>
                 <View style={[styles.dot, styles.twDot]} />
                 <Text style={styles.platformTagText}>X (Twitter)</Text>
@@ -97,14 +101,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
             </View>
           </View>
 
-          {/* Clean Enterprise Input Card */}
+          {/* Input Card */}
           <View style={styles.card}>
-            <Text style={styles.inputLabel}>Media URL</Text>
+            <Text style={styles.inputLabel}>MEDIA URL</Text>
             <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Paste media link here..."
-                placeholderTextColor="#666670"
+                placeholder="Paste video or audio link here..."
+                placeholderTextColor="#8C8D82"
                 value={url}
                 onChangeText={(text) => {
                   setUrl(text);
@@ -133,13 +137,71 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
               </View>
             )}
 
+            {/* Quick Extraction Toggles */}
+            <View style={styles.quickOptionsCard}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleTextGroup}>
+                  <Text style={styles.toggleTitle}>SponsorBlock</Text>
+                  <Text style={styles.toggleSub}>Auto-remove sponsor segments</Text>
+                </View>
+                <Switch
+                  value={sponsorBlock}
+                  onValueChange={setSponsorBlock}
+                  trackColor={{ false: SURFACE_BG, true: LIME_ACCENT }}
+                  thumbColor={sponsorBlock ? DARK_BG : SUBTEXT_COLOR}
+                  testID="home-sponsorblock-switch"
+                />
+              </View>
+
+              <View style={[styles.toggleRow, styles.topBorder]}>
+                <View style={styles.toggleTextGroup}>
+                  <Text style={styles.toggleTitle}>Embed Subtitles</Text>
+                  <Text style={styles.toggleSub}>Download & embed subtitles</Text>
+                </View>
+                <Switch
+                  value={subtitles}
+                  onValueChange={setSubtitles}
+                  trackColor={{ false: SURFACE_BG, true: LIME_ACCENT }}
+                  thumbColor={subtitles ? DARK_BG : SUBTEXT_COLOR}
+                  testID="home-subtitles-switch"
+                />
+              </View>
+
+              <View style={[styles.codecRow, styles.topBorder]}>
+                <Text style={styles.toggleTitle}>Audio Codec</Text>
+                <View style={styles.codecPills}>
+                  {(['MP3', 'M4A', 'FLAC', 'OPUS'] as AudioCodec[]).map((codec) => (
+                    <TouchableOpacity
+                      key={codec}
+                      style={[
+                        styles.codeChip,
+                        preferredCodec === codec && styles.codeChipActive,
+                      ]}
+                      onPress={() => setPreferredCodec(codec)}
+                      activeOpacity={0.8}
+                      testID={`home-codec-${codec}`}
+                    >
+                      <Text
+                        style={[
+                          styles.codeChipText,
+                          preferredCodec === codec && styles.codeChipTextActive,
+                        ]}
+                      >
+                        {codec}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
             <TouchableOpacity
               style={styles.analyzeButton}
               onPress={handleSubmit}
               activeOpacity={0.85}
               testID="home-submit-btn"
             >
-              <Text style={styles.analyzeButtonText}>Analyze Link</Text>
+              <Text style={styles.analyzeButtonText}>Analyze & Download</Text>
               <Text style={styles.analyzeButtonIcon}>→</Text>
             </TouchableOpacity>
           </View>
@@ -152,7 +214,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, error }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
   },
   keyboardView: {
     flex: 1,
@@ -163,9 +225,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
+    borderBottomColor: BORDER_COLOR,
   },
   brandRow: {
     flexDirection: 'row',
@@ -175,25 +237,26 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     letterSpacing: -0.3,
   },
   versionBadge: {
-    backgroundColor: '#19191E',
+    backgroundColor: SURFACE_BG,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   versionText: {
-    color: '#A1A1AA',
+    color: LIME_ACCENT,
     fontSize: 11,
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 32,
+    paddingTop: 24,
     paddingBottom: 40,
     maxWidth: 500,
     alignSelf: 'center',
@@ -201,31 +264,30 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 32,
-    paddingTop: 8,
+    marginBottom: 24,
   },
   heroTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   heroSubtitle: {
     fontSize: 14,
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     textAlign: 'center',
     maxWidth: 320,
     lineHeight: 20,
   },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeaderLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#A1A1AA',
+    color: LIME_ACCENT,
     letterSpacing: 1.2,
     marginBottom: 10,
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -238,9 +300,9 @@ const styles = StyleSheet.create({
   platformTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#121215',
+    backgroundColor: SURFACE_BG,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -267,38 +329,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   platformTagText: {
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 12,
     fontWeight: '500',
   },
   card: {
-    backgroundColor: '#121215',
+    backgroundColor: CARD_BG,
     borderRadius: 14,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#27272A',
-    marginBottom: 28,
+    borderColor: BORDER_COLOR,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#A1A1AA',
+    color: LIME_ACCENT,
+    letterSpacing: 1,
     marginBottom: 8,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     paddingHorizontal: 14,
     marginBottom: 16,
   },
   textInput: {
     flex: 1,
     height: 48,
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 14,
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
@@ -306,13 +370,13 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   clearIconText: {
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     fontSize: 13,
   },
   errorAlertBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 82, 82, 0.12)',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     borderWidth: 1,
     borderColor: '#FF5252',
     borderRadius: 10,
@@ -329,28 +393,89 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  quickOptionsCard: {
+    backgroundColor: SURFACE_BG,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    marginBottom: 16,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  toggleTextGroup: {
+    flex: 1,
+  },
+  toggleTitle: {
+    color: TEXT_COLOR,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  toggleSub: {
+    color: SUBTEXT_COLOR,
+    fontSize: 11,
+  },
+  topBorder: {
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
+    paddingTop: 8,
+    marginTop: 8,
+  },
+  codecRow: {
+    flexDirection: 'column',
+    gap: 6,
+  },
+  codecPills: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  codeChip: {
+    backgroundColor: DARK_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  codeChipActive: {
+    backgroundColor: LIME_ACCENT,
+    borderColor: LIME_ACCENT,
+  },
+  codeChipText: {
+    color: SUBTEXT_COLOR,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  codeChipTextActive: {
+    color: DARK_BG,
+    fontWeight: '700',
+  },
   analyzeButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     borderRadius: 10,
     height: 46,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: PRIMARY_COLOR,
+    shadowColor: LIME_ACCENT,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 4,
   },
   analyzeButtonText: {
-    color: '#FFFFFF',
+    color: DARK_BG,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   analyzeButtonIcon: {
-    color: '#FFFFFF',
+    color: DARK_BG,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

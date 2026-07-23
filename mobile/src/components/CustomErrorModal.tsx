@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform as RNPlatform,
 } from 'react-native';
+import { sealColors, sealRadii, sealTypography } from '../theme/sealTheme';
 
 interface CustomErrorModalProps {
   visible: boolean;
@@ -18,9 +19,6 @@ interface CustomErrorModalProps {
   onDismiss: () => void;
   onRetry?: () => void;
 }
-
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
 
 export const CustomErrorModal: React.FC<CustomErrorModalProps> = ({
   visible,
@@ -57,7 +55,7 @@ export const CustomErrorModal: React.FC<CustomErrorModalProps> = ({
             </ScrollView>
           )}
 
-          {/* Custom Themed Action Buttons */}
+          {/* Custom MD3 Themed Action Buttons */}
           <View style={styles.actionRow}>
             {onRetry && (
               <TouchableOpacity
@@ -90,7 +88,7 @@ export const CustomErrorModal: React.FC<CustomErrorModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(9, 9, 11, 0.88)',
+    backgroundColor: 'rgba(19, 20, 14, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -98,11 +96,11 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#121215',
-    borderRadius: 16,
+    backgroundColor: sealColors.surfaceContainer,
+    borderRadius: sealRadii.xl, // MD3 24dp card radius
     padding: 24,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: sealColors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.6,
@@ -113,12 +111,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 82, 82, 0.12)',
+    backgroundColor: sealColors.errorContainer,
     borderWidth: 1,
-    borderColor: 'rgba(255, 82, 82, 0.3)',
+    borderColor: 'rgba(255, 84, 73, 0.3)',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: sealRadii.sm,
     gap: 6,
     marginBottom: 14,
   },
@@ -126,36 +124,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   errorTagText: {
-    color: '#FF5252',
+    color: sealColors.onErrorContainer,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: sealTypography.weights.bold,
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FAFAFA',
+    fontSize: sealTypography.sizes.subheading + 2,
+    fontWeight: sealTypography.weights.bold,
+    color: sealColors.textPrimary,
     marginBottom: 8,
     letterSpacing: -0.3,
   },
   messageText: {
-    fontSize: 14,
-    color: '#A1A1AA',
+    fontSize: sealTypography.sizes.body,
+    color: sealColors.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
   },
   detailBox: {
     maxHeight: 100,
-    backgroundColor: '#09090B',
-    borderRadius: 8,
+    backgroundColor: sealColors.background,
+    borderRadius: sealRadii.sm,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: sealColors.border,
     marginBottom: 20,
   },
   detailText: {
-    fontSize: 12,
-    color: '#FF5252',
+    fontSize: sealTypography.sizes.caption,
+    color: sealColors.error,
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
     lineHeight: 16,
   },
@@ -165,43 +163,43 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     flex: 1,
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 10,
+    backgroundColor: sealColors.primary,
+    borderRadius: sealRadii.pill,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    color: sealColors.onPrimary,
+    fontSize: sealTypography.sizes.body,
+    fontWeight: sealTypography.weights.bold,
   },
   dismissButtonPrimary: {
     flex: 1,
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 10,
+    backgroundColor: sealColors.primary,
+    borderRadius: sealRadii.pill,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dismissTextPrimary: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    color: sealColors.onPrimary,
+    fontSize: sealTypography.sizes.body,
+    fontWeight: sealTypography.weights.bold,
   },
   dismissButtonSecondary: {
     flex: 1,
-    backgroundColor: '#19191E',
+    backgroundColor: sealColors.surfaceContainerHigh,
     borderWidth: 1,
-    borderColor: '#27272A',
-    borderRadius: 10,
+    borderColor: sealColors.border,
+    borderRadius: sealRadii.pill,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dismissTextSecondary: {
-    color: '#FAFAFA',
-    fontSize: 14,
-    fontWeight: '600',
+    color: sealColors.textPrimary,
+    fontSize: sealTypography.sizes.body,
+    fontWeight: sealTypography.weights.semibold,
   },
 });

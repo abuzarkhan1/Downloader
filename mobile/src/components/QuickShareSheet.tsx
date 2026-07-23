@@ -17,6 +17,7 @@ import {
   AudioFormat,
   DownloadStatusResponse,
   Platform,
+  AudioCodec,
 } from "../types";
 import {
   analyzeUrl,
@@ -26,6 +27,7 @@ import {
   downloadAndSaveMedia,
   formatErrorMessage,
 } from "../services/api";
+import { saveHistoryItem } from "../services/historyStorage";
 import { PlatformBadge } from "./PlatformBadge";
 
 export interface QuickShareSheetProps {
@@ -42,10 +44,11 @@ export function detectPlatformFromUrl(url: string | null | undefined): Platform 
   return detectPlatform(url);
 }
 
-const PRIMARY_COLOR = "#0B4DDE";
-const CARD_BG = "#121215";
-const BORDER_COLOR = "#27272A";
-const OVERLAY_BG = "rgba(9, 9, 11, 0.82)";
+const LIME_ACCENT = "#A3D48D";
+const DARK_BG = "#1B1C18";
+const CARD_BG = "#23241F";
+const BORDER_COLOR = "#3F4139";
+const OVERLAY_BG = "rgba(27, 28, 24, 0.85)";
 
 export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
   visible,
@@ -61,6 +64,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
 
   const [selectedFormatType, setSelectedFormatType] = useState<"video" | "audio">("video");
   const [selectedQuality, setSelectedQuality] = useState<string>("1080p");
+  const [selectedCodec, setSelectedCodec] = useState<AudioCodec>("MP3");
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadJobId, setDownloadJobId] = useState<string | null>(null);
@@ -156,9 +160,33 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
             if (status.file_url) {
               downloadAndSaveMedia(status.file_url).catch(() => {});
             }
+            saveHistoryItem({
+              id: job.download_job_id,
+              title: analyzeData.title,
+              url: sharedUrl || undefined,
+              platform: analyzeData.platform,
+              uploader: analyzeData.uploader,
+              thumbnail: analyzeData.thumbnail,
+              quality: selectedQuality,
+              format: selectedFormatType,
+              filePath: status.file_url || status.local_uri,
+              status: 'completed',
+            }).catch(() => {});
           } else if (status.status === "failed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setIsDownloading(false);
+            saveHistoryItem({
+              id: job.download_job_id,
+              title: analyzeData.title,
+              url: sharedUrl || undefined,
+              platform: analyzeData.platform,
+              uploader: analyzeData.uploader,
+              thumbnail: analyzeData.thumbnail,
+              quality: selectedQuality,
+              format: selectedFormatType,
+              status: 'failed',
+              errorMessage: status.error_message || status.error,
+            }).catch(() => {});
           }
         } catch (e) {
           // Continue polling resiliently
@@ -206,7 +234,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
 
           <View style={styles.headerRow}>
             <View style={styles.headerTitleGroup}>
-              <Text style={styles.headerTitle}>Quick Share Download</Text>
+              <Text style={styles.headerTitle}>Seal Quick Share Download</Text>
               <PlatformBadge platform={currentPlatform} size="small" />
             </View>
             <TouchableOpacity
@@ -228,7 +256,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
               <View style={styles.loadingContainer}>
                 <ActivityIndicator
                   size="large"
-                  color={PRIMARY_COLOR}
+                  color={LIME_ACCENT}
                   testID="quick-share-analyzing-spinner"
                 />
                 <Text style={styles.loadingText}>Analyzing shared link...</Text>
@@ -329,6 +357,23 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
                     </Text>
                   </TouchableOpacity>
                 </View>
+
+                {selectedFormatType === "audio" && (
+                  <View style={styles.codecPillsRow}>
+                    {(['MP3', 'M4A', 'FLAC', 'OPUS'] as AudioCodec[]).map((codec) => (
+                      <TouchableOpacity
+                        key={codec}
+                        style={[styles.codecPill, selectedCodec === codec && styles.codecPillActive]}
+                        onPress={() => setSelectedCodec(codec)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.codecPillText, selectedCodec === codec && styles.codecPillTextActive]}>
+                          {codec}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
 
                 <View style={styles.formatList}>
                   {selectedFormatType === "video" ? (
@@ -454,7 +499,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
                 testID="quick-share-download-btn"
               >
                 {isDownloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={DARK_BG} />
                 ) : (
                   <Text style={styles.downloadButtonText}>Download Now</Text>
                 )}
@@ -515,7 +560,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#3F3F46",
+    backgroundColor: BORDER_COLOR,
     alignSelf: "center",
     marginTop: 10,
     marginBottom: 8,
@@ -544,7 +589,7 @@ const styles = StyleSheet.create({
   },
   closeIconText: {
     fontSize: 18,
-    color: "#A1A1AA",
+    color: "#C7C8BE",
     fontWeight: "600",
   },
   scrollBody: {
@@ -566,12 +611,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   urlPreviewText: {
-    color: "#71717A",
+    color: "#C7C8BE",
     fontSize: 12,
     maxWidth: 280,
   },
   errorCard: {
-    backgroundColor: "#19191E",
+    backgroundColor: DARK_BG,
     borderColor: BORDER_COLOR,
     borderWidth: 1,
     borderRadius: 12,
@@ -588,28 +633,28 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   errorMessage: {
-    color: "#FF5252",
+    color: "#FF6B6B",
     fontSize: 13,
     textAlign: "center",
   },
   retryButton: {
     marginTop: 8,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: "#FFFFFF",
+    color: DARK_BG,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   mediaContainer: {
     gap: 16,
   },
   mediaCard: {
     flexDirection: "row",
-    backgroundColor: "#09090B",
+    backgroundColor: DARK_BG,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
@@ -626,7 +671,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 8,
-    backgroundColor: "#27272A",
+    backgroundColor: CARD_BG,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -644,12 +689,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   mediaMeta: {
-    color: "#A1A1AA",
+    color: "#C7C8BE",
     fontSize: 12,
   },
   tabRow: {
     flexDirection: "row",
-    backgroundColor: "#09090B",
+    backgroundColor: DARK_BG,
     borderRadius: 10,
     padding: 4,
     borderWidth: 1,
@@ -662,15 +707,42 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabButtonActive: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
   },
   tabText: {
-    color: "#A1A1AA",
+    color: "#C7C8BE",
     fontSize: 13,
     fontWeight: "600",
   },
   tabTextActive: {
-    color: "#FFFFFF",
+    color: DARK_BG,
+    fontWeight: "700",
+  },
+  codecPillsRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  codecPill: {
+    flex: 1,
+    backgroundColor: DARK_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    paddingVertical: 6,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  codecPillActive: {
+    backgroundColor: LIME_ACCENT,
+    borderColor: LIME_ACCENT,
+  },
+  codecPillText: {
+    color: "#C7C8BE",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  codecPillTextActive: {
+    color: DARK_BG,
+    fontWeight: "700",
   },
   formatList: {
     gap: 8,
@@ -679,7 +751,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#09090B",
+    backgroundColor: DARK_BG,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     borderRadius: 10,
@@ -687,8 +759,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   formatCardSelected: {
-    borderColor: PRIMARY_COLOR,
-    backgroundColor: "rgba(11, 77, 222, 0.1)",
+    borderColor: LIME_ACCENT,
+    backgroundColor: "rgba(163, 212, 141, 0.1)",
   },
   formatLeft: {
     flexDirection: "row",
@@ -700,18 +772,18 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: "#71717A",
+    borderColor: "#8C8D82",
     alignItems: "center",
     justifyContent: "center",
   },
   radioCircleSelected: {
-    borderColor: PRIMARY_COLOR,
+    borderColor: LIME_ACCENT,
   },
   radioInnerCircle: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
   },
   formatQuality: {
     color: "#FAFAFA",
@@ -719,26 +791,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   formatExt: {
-    color: "#A1A1AA",
+    color: "#C7C8BE",
     fontSize: 12,
     textTransform: "uppercase",
   },
   formatBadge: {
     fontSize: 10,
-    color: "#38BDF8",
-    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    color: LIME_ACCENT,
+    backgroundColor: "rgba(163, 212, 141, 0.15)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     overflow: "hidden",
   },
   formatSize: {
-    color: "#A1A1AA",
+    color: "#C7C8BE",
     fontSize: 13,
     fontWeight: "500",
   },
   progressContainer: {
-    backgroundColor: "#09090B",
+    backgroundColor: DARK_BG,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     borderRadius: 12,
@@ -757,29 +829,29 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   progressPercentText: {
-    color: PRIMARY_COLOR,
+    color: LIME_ACCENT,
     fontSize: 14,
     fontWeight: "700",
   },
   progressBarTrack: {
     height: 8,
-    backgroundColor: "#27272A",
+    backgroundColor: CARD_BG,
     borderRadius: 4,
     overflow: "hidden",
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     borderRadius: 4,
   },
   progressBarFillSuccess: {
-    backgroundColor: "#22C55E",
+    backgroundColor: LIME_ACCENT,
   },
   progressBarFillFailed: {
-    backgroundColor: "#FF5252",
+    backgroundColor: "#FF6B6B",
   },
   downloadErrorText: {
-    color: "#FF5252",
+    color: "#FF6B6B",
     fontSize: 12,
   },
   footerActions: {
@@ -790,19 +862,19 @@ const styles = StyleSheet.create({
     borderTopColor: BORDER_COLOR,
   },
   downloadButtonPrimary: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     borderRadius: 12,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
   },
-  downloadButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
   buttonDisabled: {
     opacity: 0.5,
+  },
+  downloadButtonText: {
+    color: DARK_BG,
+    fontSize: 14,
+    fontWeight: "700",
   },
   secondaryActionRow: {
     flexDirection: "row",
@@ -810,32 +882,32 @@ const styles = StyleSheet.create({
   },
   openAppButton: {
     flex: 1,
-    backgroundColor: "#19191E",
+    backgroundColor: DARK_BG,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     borderRadius: 10,
-    height: 44,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
   },
   openAppButtonText: {
     color: "#FAFAFA",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   closeFooterButton: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: DARK_BG,
     borderWidth: 1,
     borderColor: BORDER_COLOR,
     borderRadius: 10,
-    height: 44,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
   },
   closeFooterButtonText: {
-    color: "#A1A1AA",
-    fontSize: 14,
+    color: "#C7C8BE",
+    fontSize: 13,
     fontWeight: "600",
   },
 });

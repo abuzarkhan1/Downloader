@@ -28,6 +28,9 @@ class AnalyzeResponse(BaseModel):
     uploader: str = Field(..., description="Uploader / Channel name")
     video_formats: List[VideoFormat] = Field(default_factory=list)
     audio_formats: List[AudioFormat] = Field(default_factory=list)
+    is_playlist: Optional[bool] = Field(False, description="Whether content is a playlist")
+    playlist_items: Optional[List[dict]] = Field(default_factory=list, description="Playlist items metadata")
+    subtitles: Optional[List[dict]] = Field(default_factory=list, description="Available subtitles/captions")
 
 
 class ErrorResponse(BaseModel):

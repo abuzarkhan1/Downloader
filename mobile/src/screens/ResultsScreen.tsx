@@ -10,7 +10,7 @@ import {
   ScrollView,
   Platform as RNPlatform,
 } from 'react-native';
-import { AnalyzeResponse, VideoFormat, AudioFormat } from '../types';
+import { AnalyzeResponse, VideoFormat, AudioFormat, AudioCodec } from '../types';
 import { PlatformBadge } from '../components/PlatformBadge';
 
 interface ResultsScreenProps {
@@ -19,8 +19,13 @@ interface ResultsScreenProps {
   onBack: () => void;
 }
 
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
+const LIME_ACCENT = '#A3D48D';
+const DARK_BG = '#1B1C18';
+const SURFACE_BG = '#23241F';
+const CARD_BG = '#2D2E28';
+const BORDER_COLOR = '#3F4139';
+const TEXT_COLOR = '#FAFAFA';
+const SUBTEXT_COLOR = '#C7C8BE';
 
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   data,
@@ -30,6 +35,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   const [activeTab, setActiveTab] = useState<'video' | 'audio'>('video');
   const [imageError, setImageError] = useState(false);
 
+  // Audio extraction options
+  const [selectedCodec, setSelectedCodec] = useState<AudioCodec>('MP3');
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -38,7 +46,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} testID="results-screen">
-      <StatusBar barStyle="light-content" backgroundColor="#09090B" />
+      <StatusBar barStyle="light-content" backgroundColor={DARK_BG} />
 
       {/* Top Navigation Header matching Home */}
       <View style={styles.headerBar}>
@@ -107,6 +115,27 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
+        {/* Audio Codec Selector when Audio tab is active */}
+        {activeTab === 'audio' && (
+          <View style={styles.codecBox}>
+            <Text style={styles.codecLabel}>SELECT AUDIO CODEC</Text>
+            <View style={styles.codecRow}>
+              {(['MP3', 'M4A', 'FLAC', 'OPUS'] as AudioCodec[]).map((codec) => (
+                <TouchableOpacity
+                  key={codec}
+                  style={[styles.codecPill, selectedCodec === codec && styles.codecPillActive]}
+                  onPress={() => setSelectedCodec(codec)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.codecPillText, selectedCodec === codec && styles.codecPillTextActive]}>
+                    {codec}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Format List */}
         <View style={styles.formatList}>
           {activeTab === 'video' ? (
@@ -148,7 +177,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   </View>
                   <View style={styles.metaRow}>
                     <Text style={styles.extBadge}>{fmt.ext.toUpperCase()}</Text>
-                    <Text style={styles.fpsText}>High Quality MP3</Text>
+                    <Text style={styles.fpsText}>High Quality {selectedCodec}</Text>
                   </View>
                 </View>
 
@@ -160,7 +189,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                     activeOpacity={0.85}
                     testID={`dl-btn-audio-${fmt.quality}`}
                   >
-                    <Text style={styles.downloadButtonText}>Extract MP3</Text>
+                    <Text style={styles.downloadButtonAudioText}>Extract {selectedCodec}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -177,7 +206,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
   },
   headerBar: {
     height: 56,
@@ -185,20 +214,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
+    borderBottomColor: BORDER_COLOR,
   },
   backButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: '#19191E',
+    backgroundColor: SURFACE_BG,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   backText: {
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -211,17 +240,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   mediaCard: {
-    backgroundColor: '#121215',
+    backgroundColor: CARD_BG,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     marginBottom: 20,
   },
   thumbnailContainer: {
     height: 180,
     width: '100%',
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     position: 'relative',
   },
   thumbnail: {
@@ -231,10 +260,10 @@ const styles = StyleSheet.create({
   thumbnailFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#121215',
+    backgroundColor: CARD_BG,
   },
   fallbackIconText: {
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -242,15 +271,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: 'rgba(9, 9, 11, 0.85)',
+    backgroundColor: 'rgba(27, 28, 24, 0.85)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   durationText: {
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 12,
     fontWeight: '700',
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -261,22 +290,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     lineHeight: 22,
     marginBottom: 6,
   },
   uploader: {
     fontSize: 13,
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#121215',
+    backgroundColor: SURFACE_BG,
     borderRadius: 12,
     padding: 4,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   tab: {
     flex: 1,
@@ -287,15 +316,58 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabActive: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
   },
   tabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
   },
   tabTextActive: {
-    color: '#FFFFFF',
+    color: DARK_BG,
+    fontWeight: '700',
+  },
+  codecBox: {
+    backgroundColor: CARD_BG,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    marginBottom: 16,
+  },
+  codecLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: LIME_ACCENT,
+    letterSpacing: 1,
+    marginBottom: 8,
+    fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  codecRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  codecPill: {
+    flex: 1,
+    backgroundColor: SURFACE_BG,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  codecPillActive: {
+    backgroundColor: LIME_ACCENT,
+    borderColor: LIME_ACCENT,
+  },
+  codecPillText: {
+    color: SUBTEXT_COLOR,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  codecPillTextActive: {
+    color: DARK_BG,
+    fontWeight: '700',
   },
   formatList: {
     gap: 10,
@@ -304,35 +376,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#121215',
+    backgroundColor: CARD_BG,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   formatLeft: {
     gap: 6,
   },
   qualityBadge: {
-    backgroundColor: 'rgba(11, 77, 222, 0.15)',
+    backgroundColor: 'rgba(163, 212, 141, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: 'rgba(11, 77, 222, 0.3)',
+    borderColor: 'rgba(163, 212, 141, 0.3)',
   },
   qualityText: {
-    color: PRIMARY_COLOR,
+    color: LIME_ACCENT,
     fontSize: 13,
     fontWeight: '700',
   },
   qualityBadgeAudio: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    borderColor: 'rgba(234, 179, 8, 0.3)',
   },
   qualityTextAudio: {
-    color: '#22C55E',
+    color: '#EAB308',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -342,13 +414,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   extBadge: {
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     fontSize: 11,
     fontWeight: '700',
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   fpsText: {
-    color: '#666670',
+    color: '#8C8D82',
     fontSize: 11,
   },
   formatRight: {
@@ -356,27 +428,34 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sizeText: {
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 12,
     fontWeight: '600',
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   downloadButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   downloadButtonAudio: {
-    backgroundColor: '#22C55E',
+    backgroundColor: SURFACE_BG,
+    borderWidth: 1,
+    borderColor: LIME_ACCENT,
   },
   downloadButtonText: {
-    color: '#FFFFFF',
+    color: DARK_BG,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  downloadButtonAudioText: {
+    color: LIME_ACCENT,
+    fontSize: 13,
+    fontWeight: '700',
   },
   emptyText: {
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     textAlign: 'center',
     paddingVertical: 20,
   },

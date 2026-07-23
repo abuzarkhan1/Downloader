@@ -111,10 +111,49 @@ def _format_audio_qualities(formats: List[Dict[str, Any]], duration: int) -> Lis
     ]
 
 
+def _extract_subtitles(info: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Extracts subtitle and caption tracks from yt-dlp info dictionary.
+    Returns list of dicts: [{"lang": "en", "name": "English", "is_auto": False}, ...]
+    """
+    subtitles_list = []
+    seen_langs = set()
+
+    # Manual / official subtitles
+    subs = info.get("subtitles") or {}
+    for lang, tracks in subs.items():
+        name = lang
+        if isinstance(tracks, list) and len(tracks) > 0 and isinstance(tracks[0], dict):
+            name = tracks[0].get("name") or lang
+        subtitles_list.append({
+            "lang": lang,
+            "name": name,
+            "is_auto": False,
+        })
+        seen_langs.add(lang)
+
+    # Automatic captions
+    auto_subs = info.get("automatic_captions") or {}
+    for lang, tracks in auto_subs.items():
+        if lang not in seen_langs:
+            name = lang
+            if isinstance(tracks, list) and len(tracks) > 0 and isinstance(tracks[0], dict):
+                name = tracks[0].get("name") or f"{lang} (auto)"
+            subtitles_list.append({
+                "lang": lang,
+                "name": name,
+                "is_auto": True,
+            })
+            seen_langs.add(lang)
+
+    return subtitles_list
+
+
 def extract_media_info(url: str, platform: str) -> Dict[str, Any]:
     """
     Extracts media metadata using yt-dlp safely (without downloading payload).
     Raises ExtractionError on private/restricted/blocked content.
+    Supports single videos and playlists.
     """
     ydl_opts = {
         "extract_flat": False,
@@ -134,14 +173,42 @@ def extract_media_info(url: str, platform: str) -> Dict[str, Any]:
                     status_code=422,
                 )
 
-            title = info.get("title") or "Untitled Media"
-            thumbnail = info.get("thumbnail") or ""
-            duration = int(info.get("duration") or 0)
-            uploader = info.get("uploader") or info.get("channel") or info.get("uploader_id") or "Unknown Uploader"
+            is_playlist = False
+            playlist_items = []
+            entries = []
+
+            raw_entries = info.get("entries")
+            if raw_entries is not None or info.get("_type") in ["playlist", "multi_video"]:
+                is_playlist = True
+                if raw_entries is not None:
+                    entries = [e for e in list(raw_entries) if e is not None]
+                    for entry in entries:
+                        entry_id = entry.get("id") or ""
+                        entry_url = entry.get("webpage_url") or entry.get("url") or (f"https://www.youtube.com/watch?v={entry_id}" if entry_id else "")
+                        playlist_items.append({
+                            "id": entry_id,
+                            "title": entry.get("title") or "Untitled",
+                            "url": entry_url,
+                            "duration_seconds": int(entry.get("duration") or 0),
+                            "thumbnail": entry.get("thumbnail") or "",
+                            "uploader": entry.get("uploader") or entry.get("channel") or entry.get("uploader_id") or "",
+                        })
+
+            title = info.get("title") or (entries[0].get("title") if entries else "Untitled Media")
+            thumbnail = info.get("thumbnail") or (entries[0].get("thumbnail") if entries else "")
+            duration = int(info.get("duration") or (sum(int(e.get("duration") or 0) for e in entries) if entries else 0))
+            uploader = info.get("uploader") or info.get("channel") or info.get("uploader_id") or (entries[0].get("uploader") if entries else "Unknown Uploader")
 
             raw_formats = info.get("formats", [])
+            if not raw_formats and entries:
+                raw_formats = entries[0].get("formats", [])
+
             video_formats = _format_video_qualities(raw_formats, duration)
             audio_formats = _format_audio_qualities(raw_formats, duration)
+
+            subtitles = _extract_subtitles(info)
+            if not subtitles and entries:
+                subtitles = _extract_subtitles(entries[0])
 
             return {
                 "platform": platform,
@@ -151,6 +218,9 @@ def extract_media_info(url: str, platform: str) -> Dict[str, Any]:
                 "uploader": uploader,
                 "video_formats": video_formats,
                 "audio_formats": audio_formats,
+                "is_playlist": is_playlist,
+                "playlist_items": playlist_items,
+                "subtitles": subtitles,
                 "raw_info": info,  # Retained in cache for Agent B to use yt-dlp format identifiers if needed
             }
 
@@ -189,3 +259,4 @@ def extract_media_info(url: str, platform: str) -> Dict[str, Any]:
             message=f"An unexpected error occurred during extraction: {str(e)}",
             status_code=500,
         )
+

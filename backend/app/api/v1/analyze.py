@@ -65,6 +65,9 @@ def analyze_media(payload: AnalyzeRequest):
         "uploader": media_info["uploader"],
         "video_formats": [to_dict(fmt) for fmt in media_info["video_formats"]],
         "audio_formats": [to_dict(fmt) for fmt in media_info["audio_formats"]],
+        "is_playlist": media_info.get("is_playlist", False),
+        "playlist_items": media_info.get("playlist_items", []),
+        "subtitles": media_info.get("subtitles", []),
         "raw_info": media_info.get("raw_info"),
     }
 
@@ -80,4 +83,8 @@ def analyze_media(payload: AnalyzeRequest):
         uploader=media_info["uploader"],
         video_formats=media_info["video_formats"],
         audio_formats=media_info["audio_formats"],
+        is_playlist=media_info.get("is_playlist", False),
+        playlist_items=media_info.get("playlist_items", []),
+        subtitles=media_info.get("subtitles", []),
     )
+

@@ -7,17 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Platform as RNPlatform,
 } from 'react-native';
 import { getDisclaimerAcceptedAt, saveDisclaimerAcceptedAt } from '../services/storage';
+import { sealColors, sealRadii, sealTypography } from '../theme/sealTheme';
 
 interface DisclaimerModalProps {
   visible?: boolean;
   onAccept?: (timestamp?: string) => void;
 }
-
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
 
 export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
   visible: propVisible,
@@ -117,7 +114,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(9, 9, 11, 0.88)',
+    backgroundColor: 'rgba(19, 20, 14, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -125,11 +122,11 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#121215',
-    borderRadius: 16,
+    backgroundColor: sealColors.surfaceContainer,
+    borderRadius: sealRadii.xl, // MD3 24dp radius
     padding: 24,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: sealColors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.6,
@@ -137,28 +134,28 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#FAFAFA',
+    fontSize: sealTypography.sizes.heading,
+    fontWeight: sealTypography.weights.bold,
+    color: sealColors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 13,
-    color: '#A1A1AA',
+    fontSize: sealTypography.sizes.body,
+    color: sealColors.textSecondary,
     marginBottom: 16,
   },
   scrollArea: {
     maxHeight: 160,
-    backgroundColor: '#09090B',
-    borderRadius: 10,
+    backgroundColor: sealColors.background,
+    borderRadius: sealRadii.card, // MD3 16dp radius
     padding: 14,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: sealColors.border,
     marginBottom: 20,
   },
   bodyText: {
-    fontSize: 13,
-    color: '#A1A1AA',
+    fontSize: sealTypography.sizes.body,
+    color: sealColors.textSecondary,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -173,44 +170,44 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#27272A',
-    backgroundColor: '#09090B',
+    borderColor: sealColors.borderLight,
+    backgroundColor: sealColors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
+    backgroundColor: sealColors.primary,
+    borderColor: sealColors.primary,
   },
   checkmarkText: {
-    color: '#FFFFFF',
+    color: sealColors.onPrimary,
     fontSize: 12,
     fontWeight: 'bold',
   },
   checkboxLabel: {
     flex: 1,
-    fontSize: 13,
-    color: '#FAFAFA',
-    fontWeight: '500',
+    fontSize: sealTypography.sizes.body,
+    color: sealColors.textPrimary,
+    fontWeight: sealTypography.weights.medium,
   },
   acceptButton: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 10,
+    backgroundColor: sealColors.primary,
+    borderRadius: sealRadii.pill,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   acceptButtonDisabled: {
-    backgroundColor: '#19191E',
+    backgroundColor: sealColors.surfaceContainerHigh,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: sealColors.border,
   },
   acceptButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    color: sealColors.onPrimary,
+    fontSize: sealTypography.sizes.body,
+    fontWeight: sealTypography.weights.bold,
   },
   acceptButtonTextDisabled: {
-    color: '#666670',
+    color: sealColors.textMuted,
   },
 });

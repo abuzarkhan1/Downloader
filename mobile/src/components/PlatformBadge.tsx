@@ -1,17 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Platform } from '../types';
+import { sealColors, sealRadii, sealTypography } from '../theme/sealTheme';
 
 interface PlatformBadgeProps {
   platform: Platform;
   size?: 'small' | 'medium' | 'large';
   showLabel?: boolean;
+  style?: ViewStyle;
 }
 
 export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
   platform,
   size = 'medium',
   showLabel = true,
+  style,
 }) => {
   const getBadgeConfig = () => {
     switch (platform) {
@@ -19,25 +22,25 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
         return {
           label: 'YouTube',
           icon: '▶',
-          bgColor: '#FF000020',
-          textColor: '#FF4D4D',
-          borderColor: '#FF000040',
+          bgColor: 'rgba(255, 82, 82, 0.15)',
+          textColor: '#FF5252',
+          borderColor: 'rgba(255, 82, 82, 0.3)',
         };
       case 'tiktok':
         return {
           label: 'TikTok',
           icon: '🎵',
-          bgColor: '#00F2FE20',
-          textColor: '#00F2FE',
-          borderColor: '#00F2FE40',
+          bgColor: 'rgba(34, 211, 238, 0.15)',
+          textColor: '#22D3EE',
+          borderColor: 'rgba(34, 211, 238, 0.3)',
         };
       case 'instagram':
         return {
           label: 'Instagram',
           icon: '📸',
-          bgColor: '#E1306C20',
-          textColor: '#F77737',
-          borderColor: '#E1306C40',
+          bgColor: 'rgba(244, 114, 182, 0.15)',
+          textColor: '#F472B6',
+          borderColor: 'rgba(244, 114, 182, 0.3)',
         };
       case 'facebook':
         return {
@@ -51,17 +54,17 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
         return {
           label: 'X (Twitter)',
           icon: '𝕏',
-          bgColor: 'rgba(255, 255, 255, 0.15)',
-          textColor: '#FFFFFF',
-          borderColor: 'rgba(255, 255, 255, 0.3)',
+          bgColor: 'rgba(227, 227, 220, 0.15)',
+          textColor: sealColors.textPrimary,
+          borderColor: sealColors.borderLight,
         };
       default:
         return {
           label: 'Universal Web',
           icon: '🌐',
-          bgColor: '#38BDF820',
-          textColor: '#38BDF8',
-          borderColor: '#38BDF840',
+          bgColor: sealColors.primaryContainer,
+          textColor: sealColors.onPrimaryContainer,
+          borderColor: sealColors.borderLight,
         };
     }
   };
@@ -80,6 +83,7 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = ({
         },
         isSmall && styles.containerSmall,
         isLarge && styles.containerLarge,
+        style,
       ]}
       testID={`platform-badge-${platform}`}
     >
@@ -106,22 +110,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: sealRadii.card, // MD3 16dp radius
     borderWidth: 1,
     gap: 6,
   },
   containerSmall: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: sealRadii.md, // 12dp radius
     gap: 4,
   },
   containerLarge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: sealRadii.xl, // MD3 24dp radius
     gap: 8,
   },
   icon: {
@@ -134,16 +138,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: sealTypography.sizes.body,
+    fontWeight: sealTypography.weights.semibold,
   },
   labelSmall: {
-    fontSize: 11,
+    fontSize: sealTypography.sizes.caption,
   },
   labelLarge: {
-    fontSize: 15,
+    fontSize: sealTypography.sizes.subheading,
   },
 });
 
 export default PlatformBadge;
-

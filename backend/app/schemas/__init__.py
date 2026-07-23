@@ -7,6 +7,7 @@ from .analyze import (
 )
 from .download import (
     DownloadRequest,
+    DownloadRequestPayload,
     DownloadResponse,
     DownloadStatusResponse,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "AudioFormat",
     "ErrorResponse",
     "DownloadRequest",
+    "DownloadRequestPayload",
     "DownloadResponse",
     "DownloadStatusResponse",
 ]

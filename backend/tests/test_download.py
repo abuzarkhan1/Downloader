@@ -138,3 +138,35 @@ def test_celery_fallback():
     """Test fallback logic when Redis/Celery is disabled or unreachable."""
     with patch("app.config.settings.USE_CELERY", False):
         assert is_celery_available() is False
+
+
+def test_download_request_payload_extended_fields():
+    job_store.register_analyze_job("job_ext123", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    
+    with patch("app.api.v1.download.dispatch_download_job") as mock_dispatch:
+        response = client.post(
+            "/api/v1/download",
+            json={
+                "id": "job_ext123",
+                "format_type": "audio",
+                "quality": "320kbps",
+                "audio_codec": "flac",
+                "audio_bitrate": "320k",
+                "extract_subtitles": True,
+                "subtitle_lang": "en",
+                "sponsorblock_remove": True,
+                "custom_flags": ["--geo-bypass"]
+            }
+        )
+        assert response.status_code == 202
+        data = response.json()
+        assert "download_job_id" in data
+        assert mock_dispatch.called
+        kwargs = mock_dispatch.call_args.kwargs
+        assert kwargs["audio_codec"] == "flac"
+        assert kwargs["audio_bitrate"] == "320k"
+        assert kwargs["extract_subtitles"] is True
+        assert kwargs["subtitle_lang"] == "en"
+        assert kwargs["sponsorblock_remove"] is True
+        assert kwargs["custom_flags"] == ["--geo-bypass"]
+

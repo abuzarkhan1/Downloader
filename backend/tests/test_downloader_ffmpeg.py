@@ -275,3 +275,79 @@ def test_error_mapping_other_download_error(tmp_path):
         job = job_store.get_job(job_id)
         assert job["status"] == "failed"
         assert job["error"] == "HTTP Error 404: Not Found"
+
+
+def test_audio_codec_and_bitrate_selection(tmp_path):
+    job_id = "dl_audio_options_01"
+    job_store.create_download_job(job_id, "job_test", "audio", "best", "https://example.com/audio")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "audio.opus"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"opus bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/audio",
+            "audio",
+            "best",
+            audio_codec="opus",
+            audio_bitrate="320k"
+        )
+        assert captured_opts["postprocessors"][0]["preferredcodec"] == "opus"
+        assert captured_opts["postprocessors"][0]["preferredquality"] == "320"
+
+
+def test_subtitles_and_sponsorblock_and_custom_flags(tmp_path):
+    job_id = "dl_advanced_opts_02"
+    job_store.create_download_job(job_id, "job_test", "video", "1080p", "https://example.com/video")
+    job_dir = storage_manager.get_job_dir(job_id)
+    dummy_file = job_dir / "video.mp4"
+
+    captured_opts = {}
+
+    def mock_ydl_init(opts):
+        captured_opts.update(opts)
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.__exit__.return_value = False
+        mock_ydl.download.side_effect = lambda urls: dummy_file.write_bytes(b"video bytes")
+        return mock_ydl
+
+    with patch("app.services.downloader.is_ffmpeg_available", return_value=True), \
+         patch("yt_dlp.YoutubeDL", side_effect=mock_ydl_init):
+        execute_download(
+            job_id,
+            "https://example.com/video",
+            "video",
+            "1080p",
+            extract_subtitles=True,
+            subtitle_lang="es",
+            sponsorblock_remove=True,
+            custom_flags=["--geo-bypass", "--no-playlist", "--exec rm -rf /"]
+        )
+        assert captured_opts.get("writesubtitles") is True
+        assert captured_opts.get("writeautomaticsub") is True
+        assert "es" in captured_opts.get("subtitleslangs", [])
+        assert captured_opts.get("sponsorblock_remove") == ["all"]
+        assert captured_opts.get("geo_bypass") is True
+        assert captured_opts.get("noplaylist") is True
+
+
+def test_mutagen_metadata_embedding(tmp_path):
+    from app.services.downloader import embed_metadata_with_mutagen
+    test_mp3 = tmp_path / "test.mp3"
+    # Create empty file
+    test_mp3.write_bytes(b"ID3\x03\x00\x00\x00\x00\x00\x00")
+    embed_metadata_with_mutagen(str(test_mp3), title="Test Song", uploader="Test Artist")
+    assert test_mp3.exists()
+

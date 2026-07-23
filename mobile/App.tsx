@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { ScreenName, AnalyzeResponse, DownloadStatusResponse } from './src/types';
 import {
   analyzeUrl,
@@ -11,12 +11,21 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { LoadingScreen } from './src/screens/LoadingScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
 import { DownloadScreen } from './src/screens/DownloadScreen';
+import { HistoryScreen } from './src/screens/HistoryScreen';
+import { CommandTemplatesScreen } from './src/screens/CommandTemplatesScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { DisclaimerModal } from './src/components/DisclaimerModal';
 import { CustomErrorModal } from './src/components/CustomErrorModal';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { QuickShareSheet } from './src/components/QuickShareSheet';
 import { getInitialShareUrl, subscribeToShareIntents } from './src/services/shareIntent';
 import { getDisclaimerAcceptedAt } from './src/services/storage';
+
+const LIME_ACCENT = '#A3D48D';
+const DARK_BG = '#1B1C18';
+const SURFACE_BG = '#23241F';
+const BORDER_COLOR = '#3F4139';
+const SUBTEXT_COLOR = '#C7C8BE';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Home');
@@ -178,6 +187,9 @@ export default function App() {
     setCurrentScreen('Home');
   };
 
+  // Check if main tab bar should show
+  const showTabBar = ['Home', 'History', 'Templates', 'Settings'].includes(currentScreen);
+
   return (
     <ErrorBoundary>
       <View style={styles.container}>
@@ -205,32 +217,106 @@ export default function App() {
           }}
         />
 
-        {currentScreen === 'Home' && (
-          <HomeScreen onAnalyze={handleAnalyze} error={analyzeError} />
-        )}
+        <View style={styles.screenContent}>
+          {currentScreen === 'Home' && (
+            <HomeScreen onAnalyze={handleAnalyze} error={analyzeError} />
+          )}
 
-        {currentScreen === 'Loading' && (
-          <LoadingScreen message="Analyzing media link..." />
-        )}
+          {currentScreen === 'History' && (
+            <HistoryScreen
+              onRedownload={(item) => handleAnalyze(item.url || '')}
+              onBackToHome={() => setCurrentScreen('Home')}
+            />
+          )}
 
-        {currentScreen === 'Results' && analyzeData && (
-          <ResultsScreen
-            data={analyzeData}
-            onSelectFormat={handleSelectFormat}
-            onBack={handleResetToHome}
-          />
-        )}
+          {currentScreen === 'Templates' && (
+            <CommandTemplatesScreen
+              onExecuteTemplate={(flags) => {
+                showError('CLI Template Selected', `Flags set:\n${flags}`);
+              }}
+            />
+          )}
 
-        {currentScreen === 'Download' && analyzeData && (
-          <DownloadScreen
-            downloadJobId={downloadJobId}
-            statusData={downloadStatus}
-            selectedQuality={selectedQuality}
-            formatType={selectedFormatType}
-            title={analyzeData.title}
-            onCancel={handleCancelDownload}
-            onDownloadAnother={handleResetToHome}
-          />
+          {currentScreen === 'Settings' && <SettingsScreen />}
+
+          {currentScreen === 'Loading' && (
+            <LoadingScreen message="Analyzing media link..." />
+          )}
+
+          {currentScreen === 'Results' && analyzeData && (
+            <ResultsScreen
+              data={analyzeData}
+              onSelectFormat={handleSelectFormat}
+              onBack={handleResetToHome}
+            />
+          )}
+
+          {currentScreen === 'Download' && analyzeData && (
+            <DownloadScreen
+              downloadJobId={downloadJobId}
+              statusData={downloadStatus}
+              selectedQuality={selectedQuality}
+              formatType={selectedFormatType}
+              title={analyzeData.title}
+              onCancel={handleCancelDownload}
+              onDownloadAnother={handleResetToHome}
+            />
+          )}
+        </View>
+
+        {/* Bottom Navigation Bar */}
+        {showTabBar && (
+          <SafeAreaView style={styles.bottomNavContainer}>
+            <View style={styles.bottomNavBar}>
+              <TouchableOpacity
+                style={[styles.navTab, currentScreen === 'Home' && styles.navTabActive]}
+                onPress={() => setCurrentScreen('Home')}
+                activeOpacity={0.8}
+                testID="nav-tab-home"
+              >
+                <Text style={styles.navIcon}>🏠</Text>
+                <Text style={[styles.navLabel, currentScreen === 'Home' && styles.navLabelActive]}>
+                  Search
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.navTab, currentScreen === 'History' && styles.navTabActive]}
+                onPress={() => setCurrentScreen('History')}
+                activeOpacity={0.8}
+                testID="nav-tab-history"
+              >
+                <Text style={styles.navIcon}>📜</Text>
+                <Text style={[styles.navLabel, currentScreen === 'History' && styles.navLabelActive]}>
+                  History
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.navTab, currentScreen === 'Templates' && styles.navTabActive]}
+                onPress={() => setCurrentScreen('Templates')}
+                activeOpacity={0.8}
+                testID="nav-tab-templates"
+              >
+                <Text style={styles.navIcon}>⚡</Text>
+                <Text style={[styles.navLabel, currentScreen === 'Templates' && styles.navLabelActive]}>
+                  Templates
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.navTab, currentScreen === 'Settings' && styles.navTabActive]}
+                onPress={() => setCurrentScreen('Settings')}
+                activeOpacity={0.8}
+                testID="nav-tab-settings"
+              >
+                <Text style={styles.navIcon}>⚙️</Text>
+                <Text style={[styles.navLabel, currentScreen === 'Settings' && styles.navLabelActive]}>
+                  Settings
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
         )}
       </View>
     </ErrorBoundary>
@@ -240,6 +326,44 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
+  },
+  screenContent: {
+    flex: 1,
+  },
+  bottomNavContainer: {
+    backgroundColor: SURFACE_BG,
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
+  },
+  bottomNavBar: {
+    height: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 12,
+  },
+  navTab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  navTabActive: {
+    backgroundColor: 'rgba(163, 212, 141, 0.15)',
+  },
+  navIcon: {
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  navLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: SUBTEXT_COLOR,
+  },
+  navLabelActive: {
+    color: LIME_ACCENT,
+    fontWeight: '700',
   },
 });

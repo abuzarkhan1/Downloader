@@ -38,8 +38,15 @@ async def request_download(payload: DownloadRequest, background_tasks: Backgroun
         download_job_id=download_job_id,
         url=target_url,
         format_type=payload.format_type,
-        quality=payload.quality
+        quality=payload.quality,
+        audio_codec=payload.audio_codec,
+        audio_bitrate=payload.audio_bitrate,
+        extract_subtitles=payload.extract_subtitles or False,
+        subtitle_lang=payload.subtitle_lang or "en",
+        sponsorblock_remove=payload.sponsorblock_remove or False,
+        custom_flags=payload.custom_flags or [],
     )
+
 
     return DownloadResponse(download_job_id=download_job_id, status="queued")
 

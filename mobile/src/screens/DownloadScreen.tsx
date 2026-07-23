@@ -13,6 +13,7 @@ import {
 import * as IntentLauncher from 'expo-intent-launcher';
 import { DownloadStatusResponse } from '../types';
 import { getDownloadStatus } from '../services/api';
+import { saveHistoryItem } from '../services/historyStorage';
 import { CustomErrorModal } from '../components/CustomErrorModal';
 
 interface DownloadScreenProps {
@@ -26,8 +27,13 @@ interface DownloadScreenProps {
   onDownloadAnother?: () => void;
 }
 
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
+const LIME_ACCENT = '#A3D48D';
+const DARK_BG = '#1B1C18';
+const SURFACE_BG = '#23241F';
+const CARD_BG = '#2D2E28';
+const BORDER_COLOR = '#3F4139';
+const TEXT_COLOR = '#FAFAFA';
+const SUBTEXT_COLOR = '#C7C8BE';
 
 export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   downloadJobId,
@@ -46,7 +52,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
     initialStatusData?.error_message || null
   );
 
-  // Custom modal for file opening errors or copy fallback
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('File Ready');
   const [modalMessage, setModalMessage] = useState('');
@@ -57,8 +62,27 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
       if (initialStatusData.error_message) {
         setErrorMsg(initialStatusData.error_message);
       }
+      if (initialStatusData.status === 'ready' || initialStatusData.status === 'failed') {
+        saveToHistory(initialStatusData);
+      }
     }
   }, [initialStatusData]);
+
+  const saveToHistory = async (statusRes: DownloadStatusResponse) => {
+    try {
+      await saveHistoryItem({
+        id: downloadJobId || `job_${Date.now()}`,
+        title: title,
+        quality: selectedQuality,
+        format: formatType,
+        filePath: statusRes.file_url || statusRes.local_uri,
+        status: statusRes.status === 'ready' ? 'completed' : statusRes.status === 'failed' ? 'failed' : 'processing',
+        errorMessage: statusRes.error_message || statusRes.error,
+      });
+    } catch (e) {
+      // Resilience during history save
+    }
+  };
 
   useEffect(() => {
     if (!downloadJobId) return;
@@ -74,6 +98,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           if (res.status === 'failed') {
             setErrorMsg((res as any).message || res.error_message || 'Download failed. Please try again.');
           }
+          await saveToHistory(res);
           return;
         }
       } catch (err: any) {
@@ -142,7 +167,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} testID="download-screen">
-      <StatusBar barStyle="light-content" backgroundColor="#09090B" />
+      <StatusBar barStyle="light-content" backgroundColor={DARK_BG} />
 
       <CustomErrorModal
         visible={modalVisible}
@@ -153,7 +178,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
       {/* Top Header Bar matching Home */}
       <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Media Downloader</Text>
+        <Text style={styles.headerTitle}>Seal Extraction Status</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -185,8 +210,8 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           </Text>
 
           <Text style={styles.statusSubtext} numberOfLines={2}>
-            {isDownloading && `Downloading ${title} (${selectedQuality})...`}
-            {isComplete && `Your file "${title}" is ready.`}
+            {isDownloading && `Extracting ${title} (${selectedQuality})...`}
+            {isComplete && `Your file "${title}" is saved and ready.`}
             {isFailed && (errorMsg || 'An error occurred during extraction.')}
           </Text>
 
@@ -240,7 +265,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                 style={styles.cancelButton}
                 onPress={handleBack}
                 activeOpacity={0.8}
-                testID={isFailed ? "btn-retry-home" : "done-btn"}
+                testID={isFailed ? 'btn-retry-home' : 'done-btn'}
               >
                 <Text style={styles.cancelButtonText}>
                   {isDownloading ? 'Cancel Download' : 'Back to Search'}
@@ -257,7 +282,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
   },
   headerBar: {
     height: 56,
@@ -265,14 +290,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
+    borderBottomColor: BORDER_COLOR,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     letterSpacing: -0.3,
   },
   scrollContent: {
@@ -284,11 +309,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: '#121215',
+    backgroundColor: CARD_BG,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   statusHeaderRow: {
     marginBottom: 16,
@@ -301,41 +326,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeDownloading: {
-    backgroundColor: 'rgba(11, 77, 222, 0.15)',
-    borderColor: 'rgba(11, 77, 222, 0.3)',
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    borderColor: 'rgba(234, 179, 8, 0.3)',
   },
   statusBadgeTextDownloading: {
-    color: PRIMARY_COLOR,
+    color: '#EAB308',
     fontSize: 12,
     fontWeight: '700',
   },
   statusBadgeSuccess: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    backgroundColor: 'rgba(163, 212, 141, 0.15)',
+    borderColor: 'rgba(163, 212, 141, 0.3)',
   },
   statusBadgeTextSuccess: {
-    color: '#22C55E',
+    color: LIME_ACCENT,
     fontSize: 12,
     fontWeight: '700',
   },
   statusBadgeFailed: {
-    backgroundColor: 'rgba(255, 82, 82, 0.15)',
-    borderColor: 'rgba(255, 82, 82, 0.3)',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   statusBadgeTextFailed: {
-    color: '#FF5252',
+    color: '#FF6B6B',
     fontSize: 12,
     fontWeight: '700',
   },
   statusTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     marginBottom: 6,
   },
   statusSubtext: {
     fontSize: 14,
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     lineHeight: 20,
     marginBottom: 24,
   },
@@ -349,69 +374,69 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   progressLabel: {
-    color: '#A1A1AA',
+    color: SUBTEXT_COLOR,
     fontSize: 12,
     fontWeight: '600',
   },
   progressPercentText: {
-    color: PRIMARY_COLOR,
+    color: LIME_ACCENT,
     fontSize: 15,
     fontWeight: '700',
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   progressBarTrack: {
     height: 8,
-    backgroundColor: '#09090B',
+    backgroundColor: DARK_BG,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     borderRadius: 4,
   },
   actionRow: {
     gap: 10,
   },
   primaryButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: LIME_ACCENT,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: DARK_BG,
     fontSize: 14,
     fontWeight: '700',
   },
   secondaryButton: {
-    backgroundColor: '#19191E',
+    backgroundColor: SURFACE_BG,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#FAFAFA',
+    color: TEXT_COLOR,
     fontSize: 14,
     fontWeight: '600',
   },
   cancelButton: {
-    backgroundColor: '#19191E',
+    backgroundColor: SURFACE_BG,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: BORDER_COLOR,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
-    color: '#FF5252',
+    color: '#FF6B6B',
     fontSize: 14,
     fontWeight: '600',
   },

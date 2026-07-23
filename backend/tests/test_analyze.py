@@ -107,6 +107,50 @@ def test_analyze_private_content(mock_extract):
     assert "private" in data["message"].lower()
 
 
+def test_analyze_playlist():
+    mock_extract_data = {
+        "platform": "youtube",
+        "title": "Sample Playlist Title",
+        "thumbnail": "https://i.ytimg.com/vi/thumb.jpg",
+        "duration_seconds": 300,
+        "uploader": "Sample Channel",
+        "video_formats": [{"quality": "1080p", "ext": "mp4", "filesize_mb": 50.0, "fps": 30}],
+        "audio_formats": [{"quality": "192kbps", "ext": "mp3", "filesize_mb": 5.0}],
+        "is_playlist": True,
+        "playlist_items": [
+            {
+                "id": "vid1",
+                "title": "Video 1",
+                "url": "https://www.youtube.com/watch?v=vid1",
+                "duration_seconds": 120,
+                "thumbnail": "https://i.ytimg.com/vi/vid1/thumb.jpg",
+                "uploader": "Sample Channel"
+            },
+            {
+                "id": "vid2",
+                "title": "Video 2",
+                "url": "https://www.youtube.com/watch?v=vid2",
+                "duration_seconds": 180,
+                "thumbnail": "https://i.ytimg.com/vi/vid2/thumb.jpg",
+                "uploader": "Sample Channel"
+            }
+        ],
+        "subtitles": [
+            {"lang": "en", "name": "English", "is_auto": False},
+            {"lang": "es", "name": "Spanish", "is_auto": True}
+        ]
+    }
+    with patch("app.api.v1.analyze.extract_media_info", return_value=mock_extract_data):
+        response = client.post("/api/v1/analyze", json={"url": "https://www.youtube.com/playlist?list=PL123"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_playlist"] is True
+        assert len(data["playlist_items"]) == 2
+        assert data["playlist_items"][0]["id"] == "vid1"
+        assert len(data["subtitles"]) == 2
+        assert data["subtitles"][0]["lang"] == "en"
+
+
 def test_real_public_link_extraction():
     """Integration test with yt-dlp against a real public YouTube test link."""
     # Official Youtube test video (3 seconds public video)
@@ -127,3 +171,4 @@ def test_real_public_link_extraction():
             assert response.status_code in [400, 422, 429]
     except Exception as e:
         pytest.skip(f"Network call skipped due to environment restriction: {e}")
+

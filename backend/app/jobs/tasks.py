@@ -3,22 +3,68 @@ from fastapi import BackgroundTasks
 from app.jobs.celery_app import celery_app, is_celery_available
 from app.services.downloader import execute_download
 
+from typing import Optional, List
+
 logger = logging.getLogger(__name__)
 
 @celery_app.task(name="app.jobs.tasks.download_media_task")
-def download_media_task(download_job_id: str, url: str, format_type: str, quality: str):
+def download_media_task(
+    download_job_id: str,
+    url: str,
+    format_type: str,
+    quality: str,
+    audio_codec: Optional[str] = None,
+    audio_bitrate: Optional[str] = None,
+    extract_subtitles: bool = False,
+    subtitle_lang: Optional[str] = "en",
+    sponsorblock_remove: bool = False,
+    custom_flags: Optional[List[str]] = None,
+):
     """Celery worker task to process a media download job."""
     logger.info(f"[Celery Worker] Starting download task for job: {download_job_id}")
     try:
-        execute_download(download_job_id, url, format_type, quality)
+        execute_download(
+            download_job_id=download_job_id,
+            url=url,
+            format_type=format_type,
+            quality=quality,
+            audio_codec=audio_codec,
+            audio_bitrate=audio_bitrate,
+            extract_subtitles=extract_subtitles,
+            subtitle_lang=subtitle_lang,
+            sponsorblock_remove=sponsorblock_remove,
+            custom_flags=custom_flags,
+        )
     except Exception as e:
         logger.error(f"[Celery Worker] Error executing download job {download_job_id}: {e}")
 
-def run_download_job(download_job_id: str, url: str, format_type: str, quality: str):
+def run_download_job(
+    download_job_id: str,
+    url: str,
+    format_type: str,
+    quality: str,
+    audio_codec: Optional[str] = None,
+    audio_bitrate: Optional[str] = None,
+    extract_subtitles: bool = False,
+    subtitle_lang: Optional[str] = "en",
+    sponsorblock_remove: bool = False,
+    custom_flags: Optional[List[str]] = None,
+):
     """Local fallback runner (FastAPI BackgroundTasks or thread pool execution)."""
     logger.info(f"[Local BackgroundTask] Starting download task for job: {download_job_id}")
     try:
-        execute_download(download_job_id, url, format_type, quality)
+        execute_download(
+            download_job_id=download_job_id,
+            url=url,
+            format_type=format_type,
+            quality=quality,
+            audio_codec=audio_codec,
+            audio_bitrate=audio_bitrate,
+            extract_subtitles=extract_subtitles,
+            subtitle_lang=subtitle_lang,
+            sponsorblock_remove=sponsorblock_remove,
+            custom_flags=custom_flags,
+        )
     except Exception as e:
         logger.error(f"[Local BackgroundTask] Error executing download job {download_job_id}: {e}")
 
@@ -27,7 +73,13 @@ def dispatch_download_job(
     download_job_id: str,
     url: str,
     format_type: str,
-    quality: str
+    quality: str,
+    audio_codec: Optional[str] = None,
+    audio_bitrate: Optional[str] = None,
+    extract_subtitles: bool = False,
+    subtitle_lang: Optional[str] = "en",
+    sponsorblock_remove: bool = False,
+    custom_flags: Optional[List[str]] = None,
 ):
     """
     Dispatches download job:
@@ -36,7 +88,31 @@ def dispatch_download_job(
     """
     if is_celery_available():
         logger.info(f"Dispatching download job {download_job_id} via Celery.")
-        download_media_task.delay(download_job_id, url, format_type, quality)
+        download_media_task.delay(
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_codec,
+            audio_bitrate,
+            extract_subtitles,
+            subtitle_lang,
+            sponsorblock_remove,
+            custom_flags,
+        )
     else:
         logger.info(f"Dispatching download job {download_job_id} via FastAPI BackgroundTasks.")
-        background_tasks.add_task(run_download_job, download_job_id, url, format_type, quality)
+        background_tasks.add_task(
+            run_download_job,
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_codec,
+            audio_bitrate,
+            extract_subtitles,
+            subtitle_lang,
+            sponsorblock_remove,
+            custom_flags,
+        )
+
