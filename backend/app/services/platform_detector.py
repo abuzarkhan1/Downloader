@@ -3,9 +3,10 @@ from typing import Optional
 
 # Platform regex patterns
 YOUTUBE_PATTERN = re.compile(
-    r"^(https?://)?(www\.|m\.)?(youtube\.com/(watch\?.*v=|shorts/|embed/)|youtu\.be/)[a-zA-Z0-9_-]+",
+    r"^(https?://)?(www\.|m\.)?(youtube\.com/(watch\?.*v=|shorts/|embed/|playlist\?)|youtu\.be/)[a-zA-Z0-9_-]+",
     re.IGNORECASE,
 )
+
 
 TIKTOK_PATTERN = re.compile(
     r"^(https?://)?(www\.|vm\.|vt\.)?tiktok\.com/(@[\w.-]+/video/\d+|[\w.-]+)",

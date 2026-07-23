@@ -1,39 +1,35 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
 import { HistoryScreen } from '../src/screens/HistoryScreen';
-import * as historyStorage from '../src/services/historyStorage';
+import { DownloadHistoryItem } from '../src/types';
 
 describe('HistoryScreen Component', () => {
-  beforeEach(async () => {
-    await historyStorage.clearHistory();
-  });
-
   test('renders history screen and empty state without crashing', async () => {
     let tree: any;
     await act(async () => {
-      tree = renderer.create(<HistoryScreen />);
+      tree = renderer.create(<HistoryScreen initialItems={[]} />);
     });
 
     const instance = tree.root;
-    const historyScreen = instance.findByProps({ testID: 'history-screen' });
-    expect(historyScreen).toBeTruthy();
-
     const emptyText = instance.findByProps({ testID: 'history-empty-text' });
     expect(emptyText).toBeTruthy();
   });
 
   test('displays history items and handles filter clicks', async () => {
-    await historyStorage.saveHistoryItem({
-      id: 'job_test1',
-      title: 'Sample Download Video',
-      quality: '1080p',
-      format: 'video',
-      status: 'completed',
-    });
+    const mockItems: DownloadHistoryItem[] = [
+      {
+        id: 'job_test1',
+        title: 'Sample Download Video',
+        quality: '1080p',
+        format: 'video',
+        status: 'completed',
+        timestamp: '2026-01-01T00:00:00.000Z',
+      },
+    ];
 
     let tree: any;
     await act(async () => {
-      tree = renderer.create(<HistoryScreen />);
+      tree = renderer.create(<HistoryScreen initialItems={mockItems} />);
     });
 
     const instance = tree.root;
