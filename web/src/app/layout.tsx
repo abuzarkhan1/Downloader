@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DisclaimerModal, ErrorBoundary } from "@/components";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,8 +36,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-[#09090B] text-[#FAFAFA] flex flex-col font-sans selection:bg-[#0B4DDE] selection:text-white">
         <ErrorBoundary>
-          {children}
-          <DisclaimerModal />
+          <LanguageProvider>
+            {children}
+            <DisclaimerModal />
+          </LanguageProvider>
         </ErrorBoundary>
       </body>
     </html>

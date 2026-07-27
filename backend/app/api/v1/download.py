@@ -1,20 +1,21 @@
 import uuid
 from fastapi import APIRouter, HTTPException, BackgroundTasks, status
-from app.schemas import DownloadRequest, DownloadResponse, DownloadStatusResponse
+from app.schemas import (
+    DownloadRequest,
+    DownloadResponse,
+    BatchDownloadRequest,
+    BatchDownloadResponse,
+    DownloadStatusResponse,
+)
 from app.services.job_store import job_store
 from app.jobs.tasks import dispatch_download_job
 
 router = APIRouter(prefix="/download", tags=["Download"])
 
-@router.post("", response_model=DownloadResponse, status_code=status.HTTP_202_ACCEPTED)
-async def request_download(payload: DownloadRequest, background_tasks: BackgroundTasks):
-    """
-    POST /api/v1/download
-    Accepts download request: {"id": "job_...", "format_type": "video" | "audio", "quality": "1080p"}
-    Returns 202 Accepted: {"download_job_id": "dl_...", "status": "queued"}
-    """
+
+def _queue_single_download(payload: DownloadRequest, background_tasks: BackgroundTasks) -> DownloadResponse:
     download_job_id = f"dl_{uuid.uuid4().hex[:12]}"
-    
+
     # Resolve target URL from analyze_id or payload
     target_url = job_store.get_url_for_analyze_job(payload.id) or payload.url or payload.id
     if not target_url:
@@ -38,10 +39,40 @@ async def request_download(payload: DownloadRequest, background_tasks: Backgroun
         download_job_id=download_job_id,
         url=target_url,
         format_type=payload.format_type,
-        quality=payload.quality
+        quality=payload.quality,
+        audio_ext=payload.audio_ext,
+        ext=payload.ext,
+        subtitle_lang=payload.subtitle_lang,
+        subtitle_ext=payload.subtitle_ext,
+        remove_watermark=payload.remove_watermark,
     )
 
     return DownloadResponse(download_job_id=download_job_id, status="queued")
+
+
+@router.post("", response_model=DownloadResponse, status_code=status.HTTP_202_ACCEPTED)
+async def request_download(payload: DownloadRequest, background_tasks: BackgroundTasks):
+    """
+    POST /api/v1/download
+    Accepts download request: {"id": "job_...", "format_type": "video" | "audio" | "subtitle", "quality": "1080p"}
+    Returns 202 Accepted: {"download_job_id": "dl_...", "status": "queued"}
+    """
+    return _queue_single_download(payload, background_tasks)
+
+
+@router.post("/batch", response_model=BatchDownloadResponse, status_code=status.HTTP_202_ACCEPTED)
+async def request_batch_download(payload: BatchDownloadRequest, background_tasks: BackgroundTasks):
+    """
+    POST /api/v1/download/batch
+    Accepts batch download requests and queues download tasks for all items.
+    """
+    responses = []
+    for item in payload.items:
+        res = _queue_single_download(item, background_tasks)
+        responses.append(res)
+
+    return BatchDownloadResponse(download_jobs=responses)
+
 
 @router.get("/{download_job_id}/status", response_model=DownloadStatusResponse)
 async def get_download_status(download_job_id: str):
@@ -62,3 +93,4 @@ async def get_download_status(download_job_id: str):
         file_url=job["file_url"] if job["status"] == "ready" else None,
         error=job.get("error")
     )
+

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Universal Media Downloader",
+    "name": "Media Downloader",
     "slug": "video-downloader-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,18 +9,20 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#09090B"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.videodownloader.app"
     },
     "android": {
+      "package": "com.videodownloader.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#09090B"
+        "backgroundColor": "#000000"
       },
       "intentFilters": [
         {

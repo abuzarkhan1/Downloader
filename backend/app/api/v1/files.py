@@ -23,10 +23,19 @@ async def serve_downloaded_file(download_job_id: str, background_tasks: Backgrou
     # Determine mime content-type
     media_type, _ = mimetypes.guess_type(str(file_path))
     if not media_type:
-        if file_path.suffix.lower() == ".mp3":
+        sfx = file_path.suffix.lower()
+        if sfx == ".mp3":
             media_type = "audio/mpeg"
-        elif file_path.suffix.lower() == ".mp4":
+        elif sfx == ".m4a":
+            media_type = "audio/mp4"
+        elif sfx == ".wav":
+            media_type = "audio/wav"
+        elif sfx == ".mp4":
             media_type = "video/mp4"
+        elif sfx == ".vtt":
+            media_type = "text/vtt"
+        elif sfx in [".srt", ".txt"]:
+            media_type = "text/plain"
         else:
             media_type = "application/octet-stream"
 

@@ -11,6 +11,13 @@ export interface AudioFormat {
   filesize_mb: number;
 }
 
+export interface SubtitleItem {
+  language: string;
+  code: string;
+  label: string;
+  formats: ('srt' | 'vtt' | 'txt')[];
+}
+
 export interface AnalyzeResponse {
   id: string;
   platform: 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'twitter' | string;
@@ -20,6 +27,7 @@ export interface AnalyzeResponse {
   uploader: string;
   video_formats: VideoFormat[];
   audio_formats: AudioFormat[];
+  subtitles?: SubtitleItem[];
 }
 
 export interface DownloadRequestPayload {
@@ -277,6 +285,13 @@ function getMockAnalyzeResponse(url: string): AnalyzeResponse {
       { quality: '320kbps', ext: 'mp3', filesize_mb: 5.6 },
       { quality: '192kbps', ext: 'mp3', filesize_mb: 3.4 },
       { quality: '128kbps', ext: 'mp3', filesize_mb: 2.1 },
+    ],
+    subtitles: [
+      { language: 'English', code: 'en', label: 'English (US)', formats: ['srt', 'vtt', 'txt'] },
+      { language: 'Urdu', code: 'ur', label: 'Urdu (اردو)', formats: ['srt', 'vtt', 'txt'] },
+      { language: 'Spanish', code: 'es', label: 'Spanish (Español)', formats: ['srt', 'vtt', 'txt'] },
+      { language: 'French', code: 'fr', label: 'French (Français)', formats: ['srt', 'vtt', 'txt'] },
+      { language: 'Arabic', code: 'ar', label: 'Arabic (العربية)', formats: ['srt', 'vtt', 'txt'] },
     ],
   };
 }

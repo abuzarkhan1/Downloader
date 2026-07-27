@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">میڈیا ڈاؤنلوڈر</string>
+    <string name="nav_home">ہوم</string>
+    <string name="nav_results">نتائج</string>
+    <string name="nav_queue">بیچ قطار</string>
+
+    <!-- Language Switcher -->
+    <string name="language_select">زبان</string>
+    <string name="lang_english">English</string>
+    <string name="lang_urdu">اردو (Urdu)</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">یونیورسل ویڈیو اور آڈیو ڈاؤنلوڈر</string>
+    <string name="home_subtitle">سپورٹ شدہ پلیٹ فارمز سے ویڈیوز، آڈیو اور سب ٹائٹلز ڈاؤنلوڈ کریں</string>
+    <string name="link_input_hint">لنک پیسٹ کریں (یوٹیوب، ٹک ٹاک، انسٹاگرام...)</string>
+    <string name="btn_paste">پیسٹ کریں</string>
+    <string name="btn_clear">صاف کریں</string>
+    <string name="btn_analyze">لنک کا تجزیہ کریں</string>
+    <string name="mode_single">سنگل لنک</string>
+    <string name="mode_batch">بیچ / پلے لسٹ</string>
+    <string name="watermark_switch">واٹرمارک ختم کریں</string>
+    <string name="watermark_hint">سپورٹ شدہ پلیٹ فارمز (مثلاً ٹک ٹاک، ریلز) کے لیے واٹرمارک خودکار ختم کریں</string>
+    <string name="clipboard_detected">کلیپ بورڈ سے لنک ملا: %1$s</string>
+    <string name="clipboard_use">لنک استعمال کریں</string>
+
+    <!-- Results Screen -->
+    <string name="results_title">میڈیا تجزیہ</string>
+    <string name="results_empty">ابھی تک کوئی میڈیا منتخب نہیں ہوا۔ ہوم ٹیب پر جا کر لنک پیسٹ کریں۔</string>
+    <string name="uploader_label">اپلوڈ کنندہ:</string>
+    <string name="duration_label">دورانیہ:</string>
+    <string name="section_video_quality">ویڈیو کوالٹی</string>
+    <string name="section_audio_options">آڈیو ایکسٹریکشن</string>
+    <string name="section_subtitles">سب ٹائٹلز اور کیپشنز</string>
+    <string name="audio_format">فارمیٹ</string>
+    <string name="audio_bitrate">بٹ ریٹ</string>
+    <string name="subtitle_format">فارمیٹ</string>
+    <string name="btn_download">ڈاؤنلوڈ شروع کریں</string>
+    <string name="downloading">ڈاؤنلوڈ ہو رہا ہے...</string>
+    <string name="download_added">ڈاؤنلوڈ قطار میں شامل کر دیا گیا!</string>
+
+    <!-- Quality Labels -->
+    <string name="quality_144p">144p (انتہائی کم)</string>
+    <string name="quality_240p">240p (کم)</string>
+    <string name="quality_360p">360p (ایس ڈی)</string>
+    <string name="quality_480p">480p (ایس ڈی)</string>
+    <string name="quality_720p">720p (ایچ ڈی)</string>
+    <string name="quality_1080p">1080p (فل ایچ ڈی)</string>
+    <string name="quality_1440p">1440p (2 کے)</string>
+    <string name="quality_2160p">2160p (4 کے الٹرا ایچ ڈی)</string>
+
+    <!-- Batch Queue Screen -->
+    <string name="queue_title">بیچ اور پلے لسٹ قطار</string>
+    <string name="queue_empty">قطار خالی ہے۔ متعدد لنکس شامل کرنے کے لیے ہوم پر بیچ موڈ آن کریں۔</string>
+    <string name="queue_clear_completed">مکمل شدہ کو صاف کریں</string>
+    <string name="status_queued">قطار میں</string>
+    <string name="status_downloading">ڈاؤنلوڈ ہو رہا ہے %1$d%%</string>
+    <string name="status_completed">مکمل</string>
+    <string name="status_failed">ناکام</string>
+    <string name="btn_pause">روکیں</string>
+    <string name="btn_resume">دوبارہ شروع کریں</string>
+    <string name="btn_retry">دوبارہ کوشش کریں</string>
+    <string name="btn_cancel">منسوخ کریں</string>
+
+    <!-- Legal Disclaimer Dialog -->
+    <string name="disclaimer_title">قانونی ڈسکلیمر اور شرائط</string>
+    <string name="disclaimer_content">یونیورسل میڈیا ڈاؤنلوڈر استعمال کرکے، آپ کاپی رائٹ کے تمام قوانین اور پلیٹ فارم کی سروس شرائط کی پابندی کرنے سے اتفاق کرتے ہیں۔ آپ صرف وہی مواد ڈاؤنلوڈ کریں جس کی آپ کے پاس ملکیت ہو یا کاپی رائٹ ہولڈر کی طرف سے ذاتی استعمال کے لیے اجازت موجود ہو۔\n\nیہ ایپلی کیشن کاپی رائٹ شدہ مواد کو سٹور یا ہوسٹ نہیں کرتی۔ غیر قانونی کاپی رائٹ مواد ڈاؤنلوڈ کرنا سخت منع ہے۔</string>
+    <string name="disclaimer_accept">میں متفق ہوں</string>
+    <string name="disclaimer_decline">انکار اور خروج</string>
+</resources>

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -38,9 +38,17 @@ def test_platform_detector():
     assert detect_platform("https://mobile.twitter.com/user/statuses/1234567890") == "twitter"
     assert detect_platform("https://x.com/i/status/1234567890") == "twitter"
 
-    # Unsupported URLs
-    assert detect_platform("https://example.com/video") is None
-    assert detect_platform("invalid_url_string") is None
+    # Vimeo URL tests
+    assert detect_platform("https://vimeo.com/12345678") == "vimeo"
+    assert detect_platform("https://player.vimeo.com/video/12345678") == "vimeo"
+
+    # Reddit URL tests
+    assert detect_platform("https://www.reddit.com/r/videos/comments/abc123/test_video/") == "reddit"
+    assert detect_platform("https://v.redd.it/abcdef123456") == "reddit"
+
+    # Generic & invalid URL tests
+    assert detect_platform("https://example.com/video") == "web"
+    assert detect_platform("not_a_url") is None
     assert detect_platform("") is None
 
 
@@ -127,3 +135,51 @@ def test_real_public_link_extraction():
             assert response.status_code in [400, 422, 429]
     except Exception as e:
         pytest.skip(f"Network call skipped due to environment restriction: {e}")
+
+
+@pytest.mark.parametrize(
+    "platform, url",
+    [
+        ("youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+        ("tiktok", "https://www.tiktok.com/@user/video/7123456789012345678"),
+        ("instagram", "https://www.instagram.com/reel/C123456789/"),
+        ("facebook", "https://www.facebook.com/watch/?v=123456789"),
+        ("twitter", "https://x.com/user/status/1234567890"),
+        ("vimeo", "https://vimeo.com/12345678"),
+        ("reddit", "https://www.reddit.com/r/videos/comments/abc123/test_video/"),
+        ("web", "https://example.com/video.mp4"),
+    ],
+)
+def test_all_supported_platforms_metadata(platform, url):
+    mock_info = {
+        "title": f"Sample {platform.title()} Video",
+        "thumbnail": f"https://example.com/{platform}_thumb.jpg",
+        "duration": 90,
+        "uploader": f"{platform.title()} Creator",
+        "formats": [
+            {"vcodec": "h264", "height": 1080, "fps": 30, "filesize": 20000000},
+            {"vcodec": "h264", "height": 720, "fps": 30, "filesize": 10000000},
+        ],
+        "subtitles": {
+            "en": [{"name": "English"}],
+        },
+    }
+
+    with patch("yt_dlp.YoutubeDL") as mock_ydl_cls:
+        mock_ydl = MagicMock()
+        mock_ydl.__enter__.return_value = mock_ydl
+        mock_ydl.extract_info.return_value = mock_info
+        mock_ydl_cls.return_value = mock_ydl
+
+        res = extract_media_info(url, platform)
+
+        assert res["platform"] == platform
+        assert res["title"] == f"Sample {platform.title()} Video"
+        assert res["thumbnail"] == f"https://example.com/{platform}_thumb.jpg"
+        assert res["duration_seconds"] == 90
+        assert res["uploader"] == f"{platform.title()} Creator"
+        assert len(res["video_formats"]) >= 2
+        assert len(res["audio_formats"]) >= 1
+        assert len(res["subtitles"]) >= 1
+        assert res["subtitles"][0].lang == "en"
+

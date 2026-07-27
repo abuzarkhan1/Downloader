@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
 import { HomeScreenProps } from "@/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   analyzeUrl,
@@ -9,41 +10,121 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   initialUrl = "",
   isLoading = false,
   errorMessage = null,
+  removeWatermark = true,
+  onToggleWatermark,
+  onBatchAnalyze,
 }) => {
+  const { t } = useLanguage();
   const [url, setUrl] = useState<string>(initialUrl);
+  const [mode, setMode] = useState<"single" | "batch">("single");
+  const [batchUrlsText, setBatchUrlsText] = useState<string>("");
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Watermark toggle internal state fallback
+  const [internalWatermark, setInternalWatermark] = useState<boolean>(true);
+  const isWatermarkOn = removeWatermark !== undefined ? removeWatermark : internalWatermark;
+
+  const handleWatermarkToggle = (val: boolean) => {
+    setInternalWatermark(val);
+    if (onToggleWatermark) {
+      onToggleWatermark(val);
+    }
+  };
+
+  // Clipboard Auto-Detect state
+  const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
+  const [showClipboardBanner, setShowClipboardBanner] = useState<boolean>(false);
+
+  useEffect(() => {
+    const detectClipboard = async () => {
+      try {
+        if (typeof window !== "undefined" && navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          const trimmed = (text || "").trim();
+          if (trimmed && (trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+            setClipboardUrl(trimmed);
+            setShowClipboardBanner(true);
+          }
+        }
+      } catch {
+        // Permissions not granted or clipboard API not available
+      }
+    };
+    detectClipboard();
+  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setValidationError("Please enter a video or audio URL");
-      return;
-    }
-    setValidationError(null);
-    if (analyzeUrl) {
-      analyzeUrl(trimmed);
-    } else if (onAnalyzeUrl) {
-      onAnalyzeUrl(trimmed);
+
+    if (mode === "single") {
+      const trimmed = url.trim();
+      if (!trimmed) {
+        setValidationError(t("validationEnterUrl"));
+        return;
+      }
+      setValidationError(null);
+      if (analyzeUrl) {
+        analyzeUrl(trimmed);
+      } else if (onAnalyzeUrl) {
+        onAnalyzeUrl(trimmed);
+      }
+    } else {
+      // Batch mode
+      const rawLines = batchUrlsText.split("\n");
+      const validUrls = rawLines
+        .map((l) => l.trim())
+        .filter((l) => l.startsWith("http://") || l.startsWith("https://"));
+
+      if (validUrls.length === 0) {
+        setValidationError(t("validationEnterUrls"));
+        return;
+      }
+      setValidationError(null);
+      if (onBatchAnalyze) {
+        onBatchAnalyze(validUrls);
+      } else if (analyzeUrl) {
+        // Analyze first URL as fallback
+        analyzeUrl(validUrls[0]);
+      }
     }
   };
 
   const handleClear = () => {
-    setUrl("");
+    if (mode === "single") {
+      setUrl("");
+    } else {
+      setBatchUrlsText("");
+    }
     setValidationError(null);
   };
 
-  const handlePaste = async () => {
+  const handlePasteFromClipboard = async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.readText) {
         const text = await navigator.clipboard.readText();
         if (text) {
-          setUrl(text);
+          if (mode === "single") {
+            setUrl(text);
+          } else {
+            setBatchUrlsText((prev) => (prev ? `${prev}\n${text}` : text));
+          }
           setValidationError(null);
         }
       }
-    } catch (err) {
-      // Clipboard permissions denied or unavailable
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleBannerPasteAndAnalyze = () => {
+    if (!clipboardUrl) return;
+    setUrl(clipboardUrl);
+    setShowClipboardBanner(false);
+    setValidationError(null);
+    if (analyzeUrl) {
+      analyzeUrl(clipboardUrl);
+    } else if (onAnalyzeUrl) {
+      onAnalyzeUrl(clipboardUrl);
     }
   };
 
@@ -96,87 +177,229 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   ];
 
   const activeError = validationError || errorMessage;
+  const detectedCount = batchUrlsText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("http://") || l.startsWith("https://")).length;
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 bg-[#09090B] text-zinc-100 min-h-[70vh]">
+      {/* Clipboard Auto-Detect Link Prompt Banner */}
+      {showClipboardBanner && clipboardUrl && (
+        <div className="w-full mb-6 p-4 bg-[#121215] border border-[#0B4DDE]/40 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-[#0B4DDE]/20 border border-[#0B4DDE]/40 flex items-center justify-center text-[#0B4DDE] shrink-0">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>{t("clipboardBannerTitle")}</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                  URL
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 truncate max-w-md">{clipboardUrl}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleBannerPasteAndAnalyze}
+              className="flex-1 sm:flex-initial px-4 py-2 bg-[#0B4DDE] hover:bg-[#093ebd] text-white text-xs font-semibold rounded-xl shadow-md transition-colors"
+            >
+              {t("pasteAndAnalyze")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowClipboardBanner(false)}
+              className="px-3 py-2 bg-[#09090B] hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium rounded-xl border border-[#27272A] transition-colors"
+            >
+              {t("dismiss")}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header Title & Subtitle */}
       <div className="text-center mb-8 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B4DDE]/10 border border-[#0B4DDE]/30 text-[#0B4DDE] text-xs font-semibold uppercase tracking-wider">
           <span className="w-2 h-2 rounded-full bg-[#0B4DDE] animate-pulse"></span>
-          Universal Downloader
+          {t("badgeTitle")}
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-          Download Video & Audio <br className="hidden sm:inline" />
+          {t("heroTitlePart1")}{" "}
           <span className="bg-gradient-to-r from-blue-400 to-[#0B4DDE] bg-clip-text text-transparent">
-            From Any Platform
+            {t("heroTitlePart2")}
           </span>
         </h1>
         <p className="text-sm sm:text-base text-zinc-400 max-w-lg mx-auto">
-          Paste your video link below to analyze and extract high-quality video and audio files instantly.
+          {t("heroDesc")}
         </p>
       </div>
 
       {/* Main URL Input Card */}
       <div className="w-full bg-[#121215] border border-[#27272A] rounded-2xl p-4 sm:p-6 shadow-2xl shadow-black/50 transition-all duration-300 hover:border-zinc-700">
+        {/* Single Link vs Batch Mode Switcher */}
+        <div className="flex items-center justify-between mb-4 border-b border-[#27272A] pb-4">
+          <div className="flex bg-[#09090B] border border-[#27272A] p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setMode("single")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                mode === "single"
+                  ? "bg-[#0B4DDE] text-white shadow-md shadow-[#0B4DDE]/30"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              {t("singleMode")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("batch")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                mode === "batch"
+                  ? "bg-[#0B4DDE] text-white shadow-md shadow-[#0B4DDE]/30"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              {t("batchMode")}
+            </button>
+          </div>
+
+          {mode === "batch" && (
+            <span className="text-xs font-semibold text-[#0B4DDE] bg-[#0B4DDE]/10 px-2.5 py-1 rounded-lg border border-[#0B4DDE]/20">
+              {t("linksFound", { count: detectedCount })}
+            </span>
+          )}
+        </div>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label htmlFor="url-input" className="text-xs font-medium text-zinc-400 tracking-wide uppercase">
-            Media Link URL
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="url-input" className="text-xs font-medium text-zinc-400 tracking-wide uppercase">
+              {mode === "single" ? t("enterSingleUrl") : t("enterBatchUrls")}
+            </label>
 
-          <div className="relative flex items-center">
-            {/* Link Icon */}
-            <div className="absolute left-4 text-zinc-500 pointer-events-none">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            {/* Remove Watermark Toggle Switch */}
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleWatermarkToggle(!isWatermarkOn)}>
+              <span className="text-xs font-medium text-zinc-300 hidden sm:inline">
+                {t("removeWatermark")}
+              </span>
+              <button
+                type="button"
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isWatermarkOn ? "bg-[#0B4DDE]" : "bg-zinc-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isWatermarkOn ? "translate-x-4" : "translate-x-0"
+                  }`}
                 />
-              </svg>
-            </div>
-
-            {/* Input field */}
-            <input
-              id="url-input"
-              type="url"
-              value={url}
-              onChange={(e) => {
-                setUrl(e.target.value);
-                if (validationError) setValidationError(null);
-              }}
-              placeholder="Paste URL (e.g., https://www.youtube.com/watch?v=...)"
-              className="w-full bg-[#09090B] border border-[#27272A] text-white placeholder-zinc-500 text-sm sm:text-base rounded-xl pl-12 pr-24 py-3.5 focus:outline-none focus:border-[#0B4DDE] focus:ring-2 focus:ring-[#0B4DDE]/20 transition-all"
-              disabled={isLoading}
-              autoComplete="off"
-            />
-
-            {/* Action buttons inside input */}
-            <div className="absolute right-3 flex items-center gap-1.5">
-              {url ? (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/80 transition-colors"
-                  title="Clear input"
-                  aria-label="Clear input"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handlePaste}
-                  className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 rounded-md border border-[#27272A] transition-colors"
-                  title="Paste from clipboard"
-                >
-                  Paste
-                </button>
-              )}
+              </button>
             </div>
           </div>
+
+          {/* Watermark Status Pill */}
+          {isWatermarkOn && (
+            <div className="flex items-center gap-1.5 text-[11px] text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg w-fit">
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>{t("watermarkRemovedBadge")} (TikTok / Shorts)</span>
+            </div>
+          )}
+
+          {mode === "single" ? (
+            <div className="relative flex items-center">
+              {/* Link Icon */}
+              <div className="absolute left-4 text-zinc-500 pointer-events-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+              </div>
+
+              {/* Input field */}
+              <input
+                id="url-input"
+                type="url"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
+                placeholder={t("placeholderSingle")}
+                className="w-full bg-[#09090B] border border-[#27272A] text-white placeholder-zinc-500 text-sm sm:text-base rounded-xl pl-12 pr-24 py-3.5 focus:outline-none focus:border-[#0B4DDE] focus:ring-2 focus:ring-[#0B4DDE]/20 transition-all"
+                disabled={isLoading}
+                autoComplete="off"
+              />
+
+              {/* Action buttons inside input */}
+              <div className="absolute right-3 flex items-center gap-1.5">
+                {url ? (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/80 transition-colors"
+                    title="Clear input"
+                    aria-label="Clear input"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePasteFromClipboard}
+                    className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 rounded-md border border-[#27272A] transition-colors"
+                    title="Paste from clipboard"
+                  >
+                    {t("pasteCopiedLink")}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="relative">
+              <textarea
+                id="batch-url-input"
+                rows={5}
+                value={batchUrlsText}
+                onChange={(e) => {
+                  setBatchUrlsText(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
+                placeholder={t("placeholderBatch")}
+                className="w-full bg-[#09090B] border border-[#27272A] text-white placeholder-zinc-500 text-sm rounded-xl p-4 font-mono focus:outline-none focus:border-[#0B4DDE] focus:ring-2 focus:ring-[#0B4DDE]/20 transition-all"
+                disabled={isLoading}
+              />
+              <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePasteFromClipboard}
+                  className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 rounded-md border border-[#27272A] transition-colors"
+                >
+                  {t("pasteCopiedLink")}
+                </button>
+                {batchUrlsText && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="px-2 py-1 text-xs text-zinc-400 hover:text-white bg-zinc-800/80 rounded-md border border-[#27272A]"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Validation or API error notice */}
           {activeError && (
@@ -208,11 +431,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                <span>Analyzing Link...</span>
+                <span>{mode === "single" ? t("analyzingLink") : t("analyzingBatch")}</span>
               </>
             ) : (
               <>
-                <span>Analyze Link</span>
+                <span>{mode === "single" ? t("analyzeLink") : t("analyzeBatch")}</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -225,7 +448,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Supported Platforms Tags */}
       <div className="w-full mt-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 text-center mb-3">
-          Supported Platforms
+          {t("supportedPlatforms")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           {platforms.map((platform) => (

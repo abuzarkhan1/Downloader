@@ -6,36 +6,37 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  Platform as RNPlatform,
 } from 'react-native';
+import { useI18n } from '../i18n/I18nContext';
+import { Colors } from '../theme/theme';
 
 interface LoadingScreenProps {
   message?: string;
   url?: string;
 }
 
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
-
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  message = 'Analyzing media link...',
+  message,
 }) => {
+  const { t } = useI18n();
+  const displayMessage = message || t('analyzingMedia');
+
   return (
     <SafeAreaView style={styles.container} testID="loading-screen">
-      <StatusBar barStyle="light-content" backgroundColor="#09090B" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.black} />
 
       {/* Top Bar Header */}
       <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Media Downloader</Text>
+        <Text style={styles.headerTitle}>{t('appName')}</Text>
       </View>
 
       <View style={styles.content}>
         {/* Glass Card Container */}
         <View style={styles.card}>
-          <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.spinner} />
-          <Text style={styles.messageText}>{message}</Text>
+          <ActivityIndicator size="large" color={Colors.white} style={styles.spinner} />
+          <Text style={styles.messageText}>{displayMessage}</Text>
           <Text style={styles.subtext}>
-            Extracting available video qualities and audio streams...
+            {t('heroSubtitle')}
           </Text>
 
           <View style={styles.stepDotsRow}>
@@ -52,7 +53,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: Colors.black,
   },
   headerBar: {
     height: 56,
@@ -60,14 +61,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#09090B',
+    backgroundColor: Colors.black,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
+    borderBottomColor: Colors.dividerColor,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   content: {
@@ -79,11 +80,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#121215',
+    backgroundColor: Colors.black80,
     borderRadius: 16,
     padding: 32,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: Colors.dividerColor,
     alignItems: 'center',
   },
   spinner: {
@@ -93,13 +94,13 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtext: {
     fontSize: 13,
-    color: '#A1A1AA',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 24,
@@ -112,10 +113,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#27272A',
+    backgroundColor: Colors.black50,
   },
   stepDotActive: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: Colors.white,
     width: 20,
   },
 });

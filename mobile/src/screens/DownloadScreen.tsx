@@ -4,16 +4,20 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   Platform as RNPlatform,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as IntentLauncher from 'expo-intent-launcher';
+import * as FileSystem from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
 import { DownloadStatusResponse } from '../types';
-import { getDownloadStatus } from '../services/api';
+import { getDownloadStatus, downloadAndSaveMedia } from '../services/api';
 import { CustomErrorModal } from '../components/CustomErrorModal';
+import { useI18n } from '../i18n/I18nContext';
+import { Colors } from '../theme/theme';
 
 interface DownloadScreenProps {
   downloadJobId?: string | null;
@@ -26,9 +30,6 @@ interface DownloadScreenProps {
   onDownloadAnother?: () => void;
 }
 
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
-
 export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   downloadJobId,
   statusData: initialStatusData,
@@ -39,6 +40,8 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   onCancel,
   onDownloadAnother,
 }) => {
+  const { t, isRTL } = useI18n();
+
   const [currentStatus, setCurrentStatus] = useState<DownloadStatusResponse>(
     initialStatusData || { status: 'processing', progress_percent: 0 }
   );
@@ -46,7 +49,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
     initialStatusData?.error_message || null
   );
 
-  // Custom modal for file opening errors or copy fallback
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('File Ready');
   const [modalMessage, setModalMessage] = useState('');
@@ -68,7 +70,10 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
     const poll = async () => {
       try {
         const res = await getDownloadStatus(downloadJobId);
-        setCurrentStatus(res);
+        setCurrentStatus(prev => ({
+          ...res,
+          local_uri: prev.local_uri || res.local_uri,
+        }));
 
         if (res.status === 'ready' || res.status === 'failed') {
           if (res.status === 'failed') {
@@ -100,33 +105,52 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   const isComplete = currentStatus.status === 'ready';
   const isFailed = currentStatus.status === 'failed';
 
-  const fileUrl = currentStatus.file_url || currentStatus.local_uri;
+  const fileUrl = currentStatus.local_uri || currentStatus.file_url;
 
   const getMimeType = (urlStr: string) => {
     const lower = urlStr.toLowerCase();
     if (lower.endsWith('.mp3')) return 'audio/mpeg';
     if (lower.endsWith('.mp4')) return 'video/mp4';
     if (lower.endsWith('.m4a')) return 'audio/mp4';
-    return 'video/*';
+    if (lower.endsWith('.wav')) return 'audio/wav';
+    if (lower.endsWith('.srt') || lower.endsWith('.vtt') || lower.endsWith('.txt')) return 'text/plain';
+    return formatType === 'audio' ? 'audio/*' : 'video/*';
   };
 
   const handleOpen = async () => {
     if (!fileUrl) return;
     try {
+      let targetPath = fileUrl;
+
+      // If HTTP URL, download to local device storage first
+      if (targetPath.startsWith('http')) {
+        const ext = formatType === 'audio' ? 'mp3' : 'mp4';
+        const filename = `${title.replace(/[^a-zA-Z0-9._-]/g, '_')}_${selectedQuality}.${ext}`;
+        targetPath = await downloadAndSaveMedia(targetPath, filename);
+      }
+
       if (RNPlatform.OS === 'android') {
-        const mimeType = getMimeType(fileUrl);
+        let contentUri = targetPath;
+        if (targetPath.startsWith('file://')) {
+          try {
+            contentUri = await FileSystem.getContentUriAsync(targetPath);
+          } catch (e) {
+            console.warn('getContentUriAsync fallback:', e);
+          }
+        }
+        const mimeType = getMimeType(targetPath);
         await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-          data: fileUrl,
+          data: contentUri,
           type: mimeType,
-          flags: 1,
+          flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
         });
       } else {
-        const supported = await Linking.canOpenURL(fileUrl);
+        const supported = await Linking.canOpenURL(targetPath);
         if (supported) {
-          await Linking.openURL(fileUrl);
+          await Linking.openURL(targetPath);
         } else {
-          setModalTitle('File Location');
-          setModalMessage(`Your media file is ready at:\n${fileUrl}`);
+          setModalTitle('File Saved');
+          setModalMessage(`Your media file is ready at:\n${targetPath}`);
           setModalVisible(true);
         }
       }
@@ -142,7 +166,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} testID="download-screen">
-      <StatusBar barStyle="light-content" backgroundColor="#09090B" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.black} />
 
       <CustomErrorModal
         visible={modalVisible}
@@ -151,50 +175,53 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         onDismiss={() => setModalVisible(false)}
       />
 
-      {/* Top Header Bar matching Home */}
+      {/* Top Header Bar */}
       <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Media Downloader</Text>
+        <Text style={styles.headerTitle}>{t('appName')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Main Card */}
         <View style={styles.card}>
           {/* Status Header */}
-          <View style={styles.statusHeaderRow}>
+          <View style={[styles.statusHeaderRow, isRTL && styles.alignEnd]}>
             {isDownloading && (
               <View style={[styles.statusBadge, styles.statusBadgeDownloading]}>
-                <Text style={styles.statusBadgeTextDownloading}>Downloading</Text>
+                <Ionicons name="sync" size={14} color={Colors.white} style={{ marginRight: 4 }} />
+                <Text style={styles.statusBadgeTextDownloading}>Processing</Text>
               </View>
             )}
             {isComplete && (
               <View style={[styles.statusBadge, styles.statusBadgeSuccess]}>
+                <Ionicons name="checkmark-circle" size={14} color={Colors.successGreen} style={{ marginRight: 4 }} />
                 <Text style={styles.statusBadgeTextSuccess}>Ready</Text>
               </View>
             )}
             {isFailed && (
               <View style={[styles.statusBadge, styles.statusBadgeFailed]}>
+                <Ionicons name="alert-circle" size={14} color={Colors.errorRed} style={{ marginRight: 4 }} />
                 <Text style={styles.statusBadgeTextFailed}>Failed</Text>
               </View>
             )}
           </View>
 
-          <Text style={styles.statusTitle}>
-            {isDownloading && 'Downloading Media File'}
-            {isComplete && 'Download Completed'}
-            {isFailed && 'Download Unsuccessful'}
+          <Text style={[styles.statusTitle, isRTL && styles.textRight]}>
+            {isDownloading && t('downloadingMedia')}
+            {isComplete && t('downloadComplete')}
+            {isFailed && t('downloadFailed')}
           </Text>
 
-          <Text style={styles.statusSubtext} numberOfLines={2}>
-            {isDownloading && `Downloading ${title} (${selectedQuality})...`}
-            {isComplete && `Your file "${title}" is ready.`}
+          <Text style={[styles.statusSubtext, isRTL && styles.textRight]} numberOfLines={2}>
+            {isDownloading && `${t('downloadingMedia')} ${title} (${selectedQuality})...`}
+            {isComplete && `${t('fileSavedToGallery')}`}
             {isFailed && (errorMsg || 'An error occurred during extraction.')}
           </Text>
 
           {/* Progress Card Section */}
           {isDownloading && (
             <View style={styles.progressContainer} testID="progress-card">
-              <View style={styles.progressHeaderRow}>
-                <Text style={styles.progressLabel}>Processing Progress</Text>
+              <View style={[styles.progressHeaderRow, isRTL && styles.rowReverse]}>
+                <Text style={styles.progressLabel}>{t('preparingDownload')}</Text>
                 <Text style={styles.progressPercentText} testID="progress-percent">
                   {currentStatus.progress_percent}%
                 </Text>
@@ -219,6 +246,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                 activeOpacity={0.85}
                 testID="btn-open-file"
               >
+                <Ionicons name="folder-open-outline" size={18} color={Colors.black} style={{ marginRight: 6 }} />
                 <Text style={styles.primaryButtonText}>Open File</Text>
               </TouchableOpacity>
 
@@ -228,7 +256,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                 activeOpacity={0.8}
                 testID="done-btn"
               >
-                <Text style={styles.secondaryButtonText}>Back to Search</Text>
+                <Text style={styles.secondaryButtonText}>{t('newSearch')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -243,7 +271,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                 testID={isFailed ? "btn-retry-home" : "done-btn"}
               >
                 <Text style={styles.cancelButtonText}>
-                  {isDownloading ? 'Cancel Download' : 'Back to Search'}
+                  {isDownloading ? t('cancelDownload') : t('newSearch')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -257,7 +285,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: Colors.black,
   },
   headerBar: {
     height: 56,
@@ -265,77 +293,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#09090B',
-    borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
+    backgroundColor: Colors.black,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.dividerColor,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FAFAFA',
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
+  },
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  textRight: {
+    textAlign: 'right',
+  },
+  alignEnd: {
+    alignItems: 'flex-end',
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 32,
-    paddingBottom: 40,
+    paddingBottom: 100,
     maxWidth: 500,
     alignSelf: 'center',
     width: '100%',
   },
   card: {
-    backgroundColor: '#121215',
+    backgroundColor: Colors.black80,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: Colors.dividerColor,
   },
   statusHeaderRow: {
     marginBottom: 16,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   statusBadgeDownloading: {
-    backgroundColor: 'rgba(11, 77, 222, 0.15)',
-    borderColor: 'rgba(11, 77, 222, 0.3)',
+    backgroundColor: Colors.black60,
+    borderColor: Colors.dividerLight,
   },
   statusBadgeTextDownloading: {
-    color: PRIMARY_COLOR,
+    color: Colors.white,
     fontSize: 12,
     fontWeight: '700',
   },
   statusBadgeSuccess: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    backgroundColor: 'rgba(48, 209, 88, 0.15)',
+    borderColor: Colors.successGreen,
   },
   statusBadgeTextSuccess: {
-    color: '#22C55E',
+    color: Colors.successGreen,
     fontSize: 12,
     fontWeight: '700',
   },
   statusBadgeFailed: {
-    backgroundColor: 'rgba(255, 82, 82, 0.15)',
-    borderColor: 'rgba(255, 82, 82, 0.3)',
+    backgroundColor: 'rgba(255, 59, 48, 0.15)',
+    borderColor: Colors.errorRed,
   },
   statusBadgeTextFailed: {
-    color: '#FF5252',
+    color: Colors.errorRed,
     fontSize: 12,
     fontWeight: '700',
   },
   statusTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     marginBottom: 6,
   },
   statusSubtext: {
     fontSize: 14,
-    color: '#A1A1AA',
+    color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 24,
   },
@@ -349,69 +388,70 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   progressLabel: {
-    color: '#A1A1AA',
+    color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   progressPercentText: {
-    color: PRIMARY_COLOR,
+    color: Colors.white,
     fontSize: 15,
     fontWeight: '700',
     fontFamily: RNPlatform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   progressBarTrack: {
     height: 8,
-    backgroundColor: '#09090B',
+    backgroundColor: Colors.black70,
     borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#27272A',
+    borderWidth: 0.5,
+    borderColor: Colors.dividerColor,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: Colors.white,
     borderRadius: 4,
   },
   actionRow: {
     gap: 10,
   },
   primaryButton: {
-    backgroundColor: PRIMARY_COLOR,
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
     borderRadius: 10,
-    height: 46,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: Colors.black,
     fontSize: 14,
     fontWeight: '700',
   },
   secondaryButton: {
-    backgroundColor: '#19191E',
-    borderWidth: 1,
-    borderColor: '#27272A',
+    backgroundColor: Colors.black70,
+    borderWidth: 0.5,
+    borderColor: Colors.dividerColor,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },
   cancelButton: {
-    backgroundColor: '#19191E',
-    borderWidth: 1,
-    borderColor: '#27272A',
+    backgroundColor: Colors.black70,
+    borderWidth: 0.5,
+    borderColor: Colors.dividerColor,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
-    color: '#FF5252',
+    color: Colors.errorRed,
     fontSize: 14,
     fontWeight: '600',
   },

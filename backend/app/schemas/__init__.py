@@ -3,11 +3,16 @@ from .analyze import (
     AnalyzeResponse,
     VideoFormat,
     AudioFormat,
+    SubtitleOption,
+    BatchAnalyzeRequest,
+    BatchAnalyzeResponse,
     ErrorResponse,
 )
 from .download import (
     DownloadRequest,
     DownloadResponse,
+    BatchDownloadRequest,
+    BatchDownloadResponse,
     DownloadStatusResponse,
 )
 
@@ -16,8 +21,14 @@ __all__ = [
     "AnalyzeResponse",
     "VideoFormat",
     "AudioFormat",
+    "SubtitleOption",
+    "BatchAnalyzeRequest",
+    "BatchAnalyzeResponse",
     "ErrorResponse",
     "DownloadRequest",
     "DownloadResponse",
+    "BatchDownloadRequest",
+    "BatchDownloadResponse",
     "DownloadStatusResponse",
 ]
+

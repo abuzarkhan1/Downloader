@@ -24,6 +24,16 @@ def get_ffmpeg_location(custom_location: Optional[str] = None) -> Optional[str]:
             return custom_location
         return None
 
+    # 0. Check sys.prefix bin/ffmpeg (virtual environment bin directory)
+    try:
+        import sys
+        venv_ffmpeg = os.path.join(sys.prefix, "bin", "ffmpeg")
+        if os.path.exists(venv_ffmpeg) and os.access(venv_ffmpeg, os.X_OK):
+            logger.info(f"Found ffmpeg in venv bin: {venv_ffmpeg}")
+            return venv_ffmpeg
+    except Exception:
+        pass
+
     # 1. Check system PATH via shutil.which
     sys_ffmpeg = shutil.which("ffmpeg")
     if sys_ffmpeg:
@@ -36,6 +46,10 @@ def get_ffmpeg_location(custom_location: Optional[str] = None) -> Optional[str]:
         img_ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
         if img_ffmpeg and os.path.exists(img_ffmpeg):
             logger.info(f"Found ffmpeg via imageio_ffmpeg: {img_ffmpeg}")
+            # Prepend binary directory to PATH for subprocesses
+            ffmpeg_dir = os.path.dirname(img_ffmpeg)
+            if ffmpeg_dir not in os.environ.get("PATH", ""):
+                os.environ["PATH"] = f"{ffmpeg_dir}:{os.environ.get('PATH', '')}"
             return img_ffmpeg
     except Exception as e:
         logger.debug(f"imageio_ffmpeg check failed: {e}")

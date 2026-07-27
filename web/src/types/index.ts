@@ -13,6 +13,13 @@ export interface FormatOption {
 
 export type Platform = "youtube" | "tiktok" | "instagram" | "facebook" | "twitter" | "other";
 
+export interface SubtitleOption {
+  language: string;
+  code: string;
+  label: string;
+  formats: ("srt" | "vtt" | "txt")[];
+}
+
 export interface MediaMetadata {
   id: string;
   title: string;
@@ -22,7 +29,22 @@ export interface MediaMetadata {
   duration: string;
   platform?: Platform;
   formats: FormatOption[];
+  subtitles?: SubtitleOption[];
 }
+
+export interface BatchItem {
+  id: string;
+  url: string;
+  status: "pending" | "analyzing" | "ready" | "failed" | "downloading" | "completed";
+  media?: MediaMetadata;
+  selectedFormat?: FormatOption;
+  downloadJobId?: string;
+  progressPercent?: number;
+  error?: string;
+}
+
+export type AudioFormatType = "MP3" | "M4A" | "WAV";
+export type AudioBitrate = "128 kbps" | "192 kbps" | "320 kbps";
 
 export interface HomeScreenProps {
   analyzeUrl: (url: string) => void;
@@ -30,6 +52,9 @@ export interface HomeScreenProps {
   initialUrl?: string;
   isLoading?: boolean;
   errorMessage?: string | null;
+  removeWatermark?: boolean;
+  onToggleWatermark?: (value: boolean) => void;
+  onBatchAnalyze?: (urls: string[]) => void;
 }
 
 export interface LoadingScreenProps {
@@ -43,6 +68,8 @@ export interface ResultsScreenProps {
   onDownload?: (format: FormatOption) => void;
   onReset?: () => void;
   analyzeUrl?: (url: string) => void;
+  removeWatermark?: boolean;
+  onToggleWatermark?: (value: boolean) => void;
 }
 
 export interface DownloadScreenProps {
@@ -54,4 +81,3 @@ export interface DownloadScreenProps {
   onBackToSearch?: () => void;
   onComplete?: (fileUrl: string) => void;
 }
-

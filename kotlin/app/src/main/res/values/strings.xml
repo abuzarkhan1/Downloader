@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">Media Downloader</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_results">Results</string>
+    <string name="nav_queue">Batch Queue</string>
+
+    <!-- Language Switcher -->
+    <string name="language_select">Language</string>
+    <string name="lang_english">English</string>
+    <string name="lang_urdu">اردو (Urdu)</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Universal Video &amp; Audio Downloader</string>
+    <string name="home_subtitle">Download videos, audio extractions, and subtitles from supported platforms</string>
+    <string name="link_input_hint">Paste URL (YouTube, TikTok, Instagram...)</string>
+    <string name="btn_paste">Paste</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_analyze">Analyze Link</string>
+    <string name="mode_single">Single Link</string>
+    <string name="mode_batch">Batch / Playlist</string>
+    <string name="watermark_switch">Remove Watermark</string>
+    <string name="watermark_hint">Automatically strip watermarks for supported platforms (e.g. TikTok, Reels)</string>
+    <string name="clipboard_detected">Detected URL from clipboard: %1$s</string>
+    <string name="clipboard_use">Use Link</string>
+
+    <!-- Results Screen -->
+    <string name="results_title">Media Analysis</string>
+    <string name="results_empty">No media selected yet. Paste a link on the Home tab to analyze.</string>
+    <string name="uploader_label">Uploaded by:</string>
+    <string name="duration_label">Duration:</string>
+    <string name="section_video_quality">Video Quality</string>
+    <string name="section_audio_options">Audio Extraction</string>
+    <string name="section_subtitles">Subtitles &amp; Captions</string>
+    <string name="audio_format">Format</string>
+    <string name="audio_bitrate">Bitrate</string>
+    <string name="subtitle_format">Format</string>
+    <string name="btn_download">Start Download</string>
+    <string name="downloading">Downloading...</string>
+    <string name="download_added">Added to download queue!</string>
+
+    <!-- Quality Labels -->
+    <string name="quality_144p">144p (Ultra Low)</string>
+    <string name="quality_240p">240p (Low)</string>
+    <string name="quality_360p">360p (SD)</string>
+    <string name="quality_480p">480p (SD)</string>
+    <string name="quality_720p">720p (HD)</string>
+    <string name="quality_1080p">1080p (Full HD)</string>
+    <string name="quality_1440p">1440p (2K)</string>
+    <string name="quality_2160p">2160p (4K Ultra HD)</string>
+
+    <!-- Batch Queue Screen -->
+    <string name="queue_title">Batch &amp; Playlist Queue</string>
+    <string name="queue_empty">Queue is empty. Toggle Batch Mode on Home to add multiple links.</string>
+    <string name="queue_clear_completed">Clear Completed</string>
+    <string name="status_queued">Queued</string>
+    <string name="status_downloading">Downloading %1$d%%</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_failed">Failed</string>
+    <string name="btn_pause">Pause</string>
+    <string name="btn_resume">Resume</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Legal Disclaimer Dialog -->
+    <string name="disclaimer_title">Legal Disclaimer &amp; Terms</string>
+    <string name="disclaimer_content">By using Universal Media Downloader, you agree to comply with all applicable copyright laws and platform Terms of Service. You must only download content that you own, have created, or have explicit permission/rights from the copyright holder to archive for personal offline use.\n\nThis application does not host or store copyrighted material. Unauthorized distribution or downloading of copyrighted works is strictly prohibited.</string>
+    <string name="disclaimer_accept">I Accept &amp; Agree</string>
+    <string name="disclaimer_decline">Decline &amp; Exit</string>
+</resources>

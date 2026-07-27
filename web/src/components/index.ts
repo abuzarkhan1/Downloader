@@ -6,3 +6,5 @@ export type { CustomErrorModalProps } from './CustomErrorModal';
 
 export { ErrorBoundary } from './ErrorBoundary';
 export type { ErrorBoundaryProps, ErrorBoundaryState } from './ErrorBoundary';
+
+export { LanguageSelector } from './LanguageSelector';

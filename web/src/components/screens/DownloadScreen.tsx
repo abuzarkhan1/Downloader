@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { DownloadScreenProps } from "@/types";
 import { getDownloadStatus, DownloadStatusResponse } from "@/services/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   downloadJobId,
@@ -13,6 +14,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
   onBackToSearch,
   onComplete,
 }) => {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<"queued" | "processing" | "ready" | "failed">("queued");
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -52,7 +54,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
       const filename = `${safeTitle}.${ext}`;
 
       try {
-        // Attempt direct blob download for seamless file save prompt in Chrome/Safari
         const response = await fetch(fullUrl);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -71,7 +72,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         setHasDownloaded(true);
       } catch (err) {
         console.warn("Direct blob fetch download encountered issue, using fallback link:", err);
-        // Fallback: direct anchor download trigger
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = fullUrl;
@@ -82,7 +82,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         a.click();
         document.body.removeChild(a);
         setHasDownloaded(true);
-      } finally {
+      } fontFinally: {
         setIsTriggeringDownload(false);
       }
     },
@@ -114,7 +114,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
             onComplete(resolvedFileUrl);
           }
 
-          // Trigger browser-native download automatically when ready (once)
           if (!autoTriggeredRef.current) {
             autoTriggeredRef.current = true;
             triggerNativeDownload(resolvedFileUrl);
@@ -127,14 +126,12 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           return;
         }
 
-        // Continue polling if queued or processing
         if (currentStatus === "queued" || currentStatus === "processing") {
           timerId = setTimeout(pollStatus, 1200);
         }
       } catch (err: unknown) {
         if (!isMounted) return;
         console.error("Error polling download status:", err);
-        // Retry polling on temporary network glitch
         timerId = setTimeout(pollStatus, 2000);
       }
     };
@@ -147,7 +144,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
     };
   }, [downloadJobId, onComplete, triggerNativeDownload]);
 
-  // Format display helper
   const qualityDisplay = selectedFormat?.quality || "Best Quality";
   const extensionDisplay = (selectedFormat?.extension || (selectedFormat?.isAudio ? "MP3" : "MP4")).toUpperCase();
 
@@ -163,7 +159,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Back to Search</span>
+          <span>{t("backToSearch")}</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -224,14 +220,14 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
           {status === "queued" && (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-              Queued in Server Queue
+              {t("statusPending")}
             </div>
           )}
 
           {status === "processing" && (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
               <span className="w-2.5 h-2.5 rounded-full bg-[#0B4DDE] animate-pulse"></span>
-              Processing Media ({Math.round(progressPercent)}%)
+              {t("extractingMedia")} ({Math.round(progressPercent)}%)
             </div>
           )}
 
@@ -244,7 +240,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              Ready for Download
+              {t("statusReady")}
             </div>
           )}
 
@@ -257,23 +253,23 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              Download Failed
+              {t("statusFailed")}
             </div>
           )}
 
           {/* Dynamic Headline */}
           <h1 className="text-xl sm:text-2xl font-bold text-white">
-            {status === "ready" && "Your Download is Ready!"}
-            {status === "processing" && "Extracting & Converting Media..."}
-            {status === "queued" && "Preparing Download Job..."}
-            {status === "failed" && "Failed to Process Download"}
+            {status === "ready" && t("downloadReady")}
+            {status === "processing" && t("extractingMedia")}
+            {status === "queued" && t("preparingJob")}
+            {status === "failed" && t("downloadFailed")}
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 max-w-md">
-            {status === "ready" && "Browser file download triggered automatically. You can also save or open the file below."}
-            {status === "processing" && "Please wait while our backend converts and packages your high-quality file."}
-            {status === "queued" && "Your request is queued. Processing will begin in a moment."}
-            {status === "failed" && (errorMessage || "An error occurred while attempting to fetch or extract media.")}
+            {status === "ready" && t("readyDesc")}
+            {status === "processing" && t("processingDesc")}
+            {status === "queued" && t("queuedDesc")}
+            {status === "failed" && (errorMessage || t("failedDesc"))}
           </p>
         </div>
 
@@ -281,7 +277,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
         {(status === "queued" || status === "processing" || status === "ready") && (
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-semibold">
-              <span className="text-zinc-400">Conversion Progress</span>
+              <span className="text-zinc-400">{t("conversionProgress")}</span>
               <span className="text-[#0B4DDE] font-mono">{Math.round(progressPercent)}%</span>
             </div>
 
@@ -290,7 +286,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                 className="h-full rounded-full transition-all duration-300 ease-out bg-gradient-to-r from-[#0B4DDE] to-blue-400 relative overflow-hidden"
                 style={{ width: `${Math.max(5, Math.min(100, progressPercent))}%` }}
               >
-                {/* Subtle animated shine effect */}
                 <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
               </div>
             </div>
@@ -299,7 +294,6 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-4 flex flex-col sm:flex-row gap-3">
-          {/* Main Open/Save / Re-Download Button */}
           <button
             type="button"
             onClick={() => fileUrl && triggerNativeDownload(fileUrl)}
@@ -316,7 +310,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                <span>Saving File...</span>
+                <span>{t("savingFile")}</span>
               </>
             ) : status === "ready" ? (
               <>
@@ -328,7 +322,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
-                <span>{hasDownloaded ? "Download File Again" : "Open / Save File"}</span>
+                <span>{hasDownloaded ? t("downloadFileAgain") : t("openSaveFile")}</span>
               </>
             ) : (
               <>
@@ -340,12 +334,11 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                <span>Preparing Download...</span>
+                <span>{t("preparingDownload")}</span>
               </>
             )}
           </button>
 
-          {/* Back to Search Button */}
           <button
             type="button"
             onClick={handleBackToSearch}
@@ -354,7 +347,7 @@ export const DownloadScreen: React.FC<DownloadScreenProps> = ({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span>Back to Search</span>
+            <span>{t("backToSearch")}</span>
           </button>
         </div>
       </div>

@@ -11,6 +11,13 @@ export interface AudioFormat {
   quality: string;
   ext: string;
   filesize_mb: number;
+  bitrate?: string;
+}
+
+export interface SubtitleTrack {
+  language: string;
+  code: string;
+  is_auto?: boolean;
 }
 
 export interface AnalyzeResponse {
@@ -22,6 +29,7 @@ export interface AnalyzeResponse {
   uploader: string;
   video_formats: VideoFormat[];
   audio_formats: AudioFormat[];
+  subtitles?: SubtitleTrack[];
 }
 
 export type ErrorCode = 
@@ -39,7 +47,7 @@ export interface AnalyzeErrorResponse {
 
 export interface DownloadRequest {
   id: string;
-  format_type: 'video' | 'audio';
+  format_type: 'video' | 'audio' | 'subtitle';
   quality: string;
 }
 
@@ -57,4 +65,4 @@ export interface DownloadStatusResponse {
   local_uri?: string;
 }
 
-export type ScreenName = 'Home' | 'Loading' | 'Results' | 'Download';
+export type ScreenName = 'Home' | 'Loading' | 'Results' | 'Download' | 'Downloads' | 'History';

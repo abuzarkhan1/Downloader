@@ -7,17 +7,15 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Platform as RNPlatform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { getDisclaimerAcceptedAt, saveDisclaimerAcceptedAt } from '../services/storage';
+import { Colors } from '../theme/theme';
 
 interface DisclaimerModalProps {
   visible?: boolean;
   onAccept?: (timestamp?: string) => void;
 }
-
-// oklch(0.66 0.16 252) -> Electric Royal Blue #0B4DDE
-const PRIMARY_COLOR = '#0B4DDE';
 
 export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
   visible: propVisible,
@@ -90,7 +88,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
             testID="disclaimer-checkbox"
           >
             <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
-              {isChecked && <Text style={styles.checkmarkText}>✓</Text>}
+              {isChecked && <Ionicons name="checkmark-sharp" size={14} color={Colors.black} />}
             </View>
             <Text style={styles.checkboxLabel}>
               I agree that I have permission to download this content.
@@ -117,7 +115,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(9, 9, 11, 0.88)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -125,40 +123,35 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#121215',
+    backgroundColor: Colors.black80,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#27272A',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 10,
+    borderColor: Colors.dividerLight,
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
-    color: '#A1A1AA',
+    color: Colors.textSecondary,
     marginBottom: 16,
   },
   scrollArea: {
     maxHeight: 160,
-    backgroundColor: '#09090B',
+    backgroundColor: Colors.black90,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: Colors.dividerColor,
     marginBottom: 20,
   },
   bodyText: {
     fontSize: 13,
-    color: '#A1A1AA',
+    color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -173,44 +166,44 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#27272A',
-    backgroundColor: '#09090B',
+    borderColor: Colors.dividerColor,
+    backgroundColor: Colors.black90,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
+    backgroundColor: Colors.white,
+    borderColor: Colors.white,
   },
   checkmarkText: {
-    color: '#FFFFFF',
+    color: Colors.black,
     fontSize: 12,
     fontWeight: 'bold',
   },
   checkboxLabel: {
     flex: 1,
     fontSize: 13,
-    color: '#FAFAFA',
+    color: Colors.textPrimary,
     fontWeight: '500',
   },
   acceptButton: {
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: Colors.white,
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
   acceptButtonDisabled: {
-    backgroundColor: '#19191E',
+    backgroundColor: Colors.black70,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: Colors.dividerColor,
   },
   acceptButtonText: {
-    color: '#FFFFFF',
+    color: Colors.black,
     fontSize: 14,
     fontWeight: '700',
   },
   acceptButtonTextDisabled: {
-    color: '#666670',
+    color: Colors.textTertiary,
   },
 });

@@ -130,6 +130,12 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '192kbps', ext: 'mp3', filesize_mb: 5.8 },
           { quality: '128kbps', ext: 'mp3', filesize_mb: 3.9 },
         ],
+        subtitles: [
+          { language: 'English', code: 'en' },
+          { language: 'English (Auto)', code: 'en-auto', is_auto: true },
+          { language: 'Urdu', code: 'ur' },
+          { language: 'Spanish', code: 'es' },
+        ],
       };
     }
 
@@ -147,6 +153,10 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '480p', ext: 'mp4', filesize_mb: 7.8, fps: 30 },
         ],
         audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 1.2 }],
+        subtitles: [
+          { language: 'English', code: 'en' },
+          { language: 'Urdu', code: 'ur' },
+        ],
       };
     }
 
@@ -163,6 +173,9 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '720p', ext: 'mp4', filesize_mb: 9.8, fps: 30 },
         ],
         audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 0.8 }],
+        subtitles: [
+          { language: 'English', code: 'en' },
+        ],
       };
     }
 
@@ -180,6 +193,9 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '480p', ext: 'mp4', filesize_mb: 14.0, fps: 30 },
         ],
         audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 2.0 }],
+        subtitles: [
+          { language: 'English', code: 'en' },
+        ],
       };
     }
 
@@ -197,6 +213,9 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
           { quality: '480p', ext: 'mp4', filesize_mb: 8.2, fps: 30 },
         ],
         audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 1.1 }],
+        subtitles: [
+          { language: 'English', code: 'en' },
+        ],
       };
     }
 
@@ -213,6 +232,9 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
         { quality: '480p', ext: 'mp4', filesize_mb: 11.0, fps: 30 },
       ],
       audio_formats: [{ quality: '192kbps', ext: 'mp3', filesize_mb: 2.8 }],
+      subtitles: [
+        { language: 'English', code: 'en' },
+      ],
     };
   }
 
@@ -252,7 +274,7 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
  */
 export async function startDownload(
   id: string,
-  format_type: 'video' | 'audio',
+  format_type: 'video' | 'audio' | 'subtitle',
   quality: string
 ): Promise<DownloadJobResponse> {
   if (USE_MOCK) {
@@ -386,12 +408,22 @@ export async function downloadAndSaveMedia(
     const downloadResult = await FileSystem.downloadAsync(fileUrl, targetPath);
     const localUri = downloadResult.uri;
 
-    // Save to media library if permission granted
+    // Save to media library (Gallery / Photos) if permission granted
     try {
       if (MediaLibrary && typeof MediaLibrary.requestPermissionsAsync === 'function') {
         const permResult = await MediaLibrary.requestPermissionsAsync();
         if (permResult && permResult.status === 'granted') {
-          await MediaLibrary.createAssetAsync(localUri);
+          const asset = await MediaLibrary.createAssetAsync(localUri);
+          try {
+            const album = await MediaLibrary.getAlbumAsync('Video Downloader');
+            if (!album) {
+              await MediaLibrary.createAlbumAsync('Video Downloader', asset, false);
+            } else {
+              await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+            }
+          } catch (albumError) {
+            console.log('Album creation skipped, asset saved to main gallery:', albumError);
+          }
         }
       }
     } catch (permError) {

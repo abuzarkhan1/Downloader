@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 const DISCLAIMER_STORAGE_KEY = '@disclaimer_accepted_at';
 
 export interface DisclaimerModalProps {
-  /** Force the modal to open regardless of localStorage state (useful for settings / re-reading terms) */
+  /** Force the modal to open regardless of localStorage state */
   forceOpen?: boolean;
   /** Optional callback fired after the user accepts the disclaimer */
   onAccept?: (timestamp: string) => void;
 }
 
 export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModalProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -42,7 +44,6 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
     }
   };
 
-  // Prevent SSR hydration mismatch
   if (!isMounted || !isOpen) {
     return null;
   }
@@ -53,18 +54,17 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
       role="dialog"
       aria-labelledby="disclaimer-title"
       aria-describedby="disclaimer-desc"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/88 backdrop-blur-md transition-opacity duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity duration-300"
     >
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-zinc-100">
         {/* Header Icon & Title */}
         <div className="flex items-start space-x-4 mb-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400">
             <svg
               className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
@@ -75,10 +75,10 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
             </svg>
           </div>
           <div>
-            <h2 id="disclaimer-title" className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-              Terms & Compliance Disclaimer
+            <h2 id="disclaimer-title" className="text-xl font-bold text-white">
+              {t("disclaimerModalTitle")}
             </h2>
-            <p className="mt-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-xs font-medium text-zinc-400">
               Please review and accept our usage guidelines to continue
             </p>
           </div>
@@ -87,7 +87,7 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
         {/* Scrollable Copy */}
         <div
           id="disclaimer-desc"
-          className="max-h-56 overflow-y-auto rounded-xl bg-zinc-50 dark:bg-zinc-950/60 p-4 border border-zinc-100 dark:border-zinc-800 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 space-y-3 scrollbar-thin"
+          className="max-h-56 overflow-y-auto rounded-xl bg-zinc-950 p-4 border border-zinc-800 text-xs leading-relaxed text-zinc-300 space-y-3"
         >
           <p>
             This application is provided for legitimate and authorized personal media management only.
@@ -99,7 +99,7 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
             or download restricted or protected media without authorization.
           </p>
           <p>
-            The developers and maintainers assume no liability for misuse of this tool. Users are solely responsible for ensuring compliance with all local laws, regulations, and third-party content rights.
+            The developers assume no liability for misuse of this tool. Users are solely responsible for ensuring compliance with all local laws and third-party content rights.
           </p>
         </div>
 
@@ -111,12 +111,12 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
               type="checkbox"
               checked={isChecked}
               onChange={(e) => setIsChecked(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer"
+              className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
           </div>
           <label
             htmlFor="disclaimer-checkbox"
-            className="text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none leading-tight"
+            className="text-xs font-medium text-zinc-300 cursor-pointer select-none leading-tight"
           >
             I agree that I have permission to download this content.
           </label>
@@ -130,11 +130,11 @@ export function DisclaimerModal({ forceOpen = false, onAccept }: DisclaimerModal
             onClick={handleAccept}
             className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all duration-200 shadow-md ${
               isChecked
-                ? 'bg-blue-600 text-white hover:bg-blue-500 active:scale-[0.98] cursor-pointer shadow-blue-500/20'
-                : 'bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed'
+                ? 'bg-[#0B4DDE] text-white hover:bg-[#093ebd] active:scale-[0.98] cursor-pointer shadow-[#0B4DDE]/20'
+                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
             }`}
           >
-            Continue to App
+            {t("disclaimerAccept")}
           </button>
         </div>
       </div>

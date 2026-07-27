@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from fastapi import BackgroundTasks
 from app.jobs.celery_app import celery_app, is_celery_available
 from app.services.downloader import execute_download
@@ -6,19 +7,59 @@ from app.services.downloader import execute_download
 logger = logging.getLogger(__name__)
 
 @celery_app.task(name="app.jobs.tasks.download_media_task")
-def download_media_task(download_job_id: str, url: str, format_type: str, quality: str):
+def download_media_task(
+    download_job_id: str,
+    url: str,
+    format_type: str,
+    quality: str,
+    audio_ext: Optional[str] = None,
+    ext: Optional[str] = None,
+    subtitle_lang: Optional[str] = None,
+    subtitle_ext: Optional[str] = None,
+    remove_watermark: bool = True,
+):
     """Celery worker task to process a media download job."""
     logger.info(f"[Celery Worker] Starting download task for job: {download_job_id}")
     try:
-        execute_download(download_job_id, url, format_type, quality)
+        execute_download(
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_ext=audio_ext,
+            ext=ext,
+            subtitle_lang=subtitle_lang,
+            subtitle_ext=subtitle_ext,
+            remove_watermark=remove_watermark,
+        )
     except Exception as e:
         logger.error(f"[Celery Worker] Error executing download job {download_job_id}: {e}")
 
-def run_download_job(download_job_id: str, url: str, format_type: str, quality: str):
+def run_download_job(
+    download_job_id: str,
+    url: str,
+    format_type: str,
+    quality: str,
+    audio_ext: Optional[str] = None,
+    ext: Optional[str] = None,
+    subtitle_lang: Optional[str] = None,
+    subtitle_ext: Optional[str] = None,
+    remove_watermark: bool = True,
+):
     """Local fallback runner (FastAPI BackgroundTasks or thread pool execution)."""
     logger.info(f"[Local BackgroundTask] Starting download task for job: {download_job_id}")
     try:
-        execute_download(download_job_id, url, format_type, quality)
+        execute_download(
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_ext=audio_ext,
+            ext=ext,
+            subtitle_lang=subtitle_lang,
+            subtitle_ext=subtitle_ext,
+            remove_watermark=remove_watermark,
+        )
     except Exception as e:
         logger.error(f"[Local BackgroundTask] Error executing download job {download_job_id}: {e}")
 
@@ -27,7 +68,12 @@ def dispatch_download_job(
     download_job_id: str,
     url: str,
     format_type: str,
-    quality: str
+    quality: str,
+    audio_ext: Optional[str] = None,
+    ext: Optional[str] = None,
+    subtitle_lang: Optional[str] = None,
+    subtitle_ext: Optional[str] = None,
+    remove_watermark: bool = True,
 ):
     """
     Dispatches download job:
@@ -36,7 +82,29 @@ def dispatch_download_job(
     """
     if is_celery_available():
         logger.info(f"Dispatching download job {download_job_id} via Celery.")
-        download_media_task.delay(download_job_id, url, format_type, quality)
+        download_media_task.delay(
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_ext=audio_ext,
+            ext=ext,
+            subtitle_lang=subtitle_lang,
+            subtitle_ext=subtitle_ext,
+            remove_watermark=remove_watermark,
+        )
     else:
         logger.info(f"Dispatching download job {download_job_id} via FastAPI BackgroundTasks.")
-        background_tasks.add_task(run_download_job, download_job_id, url, format_type, quality)
+        background_tasks.add_task(
+            run_download_job,
+            download_job_id,
+            url,
+            format_type,
+            quality,
+            audio_ext=audio_ext,
+            ext=ext,
+            subtitle_lang=subtitle_lang,
+            subtitle_ext=subtitle_ext,
+            remove_watermark=remove_watermark,
+        )
+
