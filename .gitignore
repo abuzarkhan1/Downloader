@@ -9,11 +9,13 @@ Thumbs.db
 *.swp
 *.tmp
 
-# Environment Files & Secrets
+# Environment Files & Secrets (never commit real secrets)
 .env
+.env.local
 .env*.local
 .env.production
 .env.staging
+# .env.example is intentionally tracked (no secrets, just documentation)
 
 # Python & FastAPI Backend
 backend/.venv*/
