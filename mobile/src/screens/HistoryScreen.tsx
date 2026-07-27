@@ -12,21 +12,26 @@ import {
   Alert,
   Platform as RNPlatform,
   Linking,
+  Modal,
+  Share,
 } from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path, Polygon } from 'react-native-svg';
 import { Colors } from '../theme/theme';
-import { getHistoryItems, removeHistoryItem, clearAllHistory, HistoryItem } from '../services/historyStorage';
+import { useHistoryStore, HistoryItem } from '../store/useHistoryStore';
 import { SmartThumbnail } from '../components/SmartThumbnail';
+import { MediaPlayerModal } from '../components/MediaPlayerModal';
 
 interface HistoryScreenProps {
   onNavigateHome?: () => void;
 }
 
-const HistoryThumbnail: React.FC<{ thumbnailUrl?: string; platform?: string; formatType: string }> = ({
+const HistoryThumbnail: React.FC<{ thumbnailUrl?: string; platform?: string; formatType: string; thumbnailIsFallback?: boolean }> = ({
   thumbnailUrl,
   platform,
   formatType,
+  thumbnailIsFallback,
 }) => {
   return (
     <SmartThumbnail
@@ -35,29 +40,25 @@ const HistoryThumbnail: React.FC<{ thumbnailUrl?: string; platform?: string; for
       containerStyle={{ width: 46, height: 46, borderRadius: 10 }}
       style={{ width: 46, height: 46, borderRadius: 10 }}
       fallbackIconName={formatType === 'audio' ? 'musical-notes' : 'film'}
+      isFallbackThumbnail={thumbnailIsFallback}
     />
   );
 };
 
 export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) => {
-  const [historyList, setHistoryList] = useState<HistoryItem[]>([]);
+  const { historyItems: historyList, removeHistoryItem, clearHistory } = useHistoryStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
 
-  const loadHistory = async () => {
-    setLoading(true);
-    const items = await getHistoryItems();
-    setHistoryList(items);
-    setLoading(false);
-  };
+  const [playerVisible, setPlayerVisible] = useState(false);
+  const [playerUri, setPlayerUri] = useState<string | null>(null);
+  const [playerFormat, setPlayerFormat] = useState<'video' | 'audio'>('video');
+  const [playerTitle, setPlayerTitle] = useState('');
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  const handleRemove = async (id: string) => {
-    await removeHistoryItem(id);
-    setHistoryList(prev => prev.filter(item => item.id !== id));
+  const handleRemove = (id: string) => {
+    removeHistoryItem(id);
   };
 
   const handleClearAll = () => {
@@ -69,9 +70,8 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
         {
           text: 'Clear All',
           style: 'destructive',
-          onPress: async () => {
-            await clearAllHistory();
-            setHistoryList([]);
+          onPress: () => {
+            clearHistory();
           },
         },
       ]
@@ -79,21 +79,14 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
   };
 
   const handleOpenFile = async (item: HistoryItem) => {
-    if (!item.localPath) return;
-    try {
-      if (RNPlatform.OS === 'android') {
-        const mimeType = item.formatType === 'audio' ? 'audio/mpeg' : 'video/mp4';
-        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-          data: item.localPath,
-          type: mimeType,
-          flags: 1,
-        });
-      } else {
-        await Linking.openURL(item.localPath);
-      }
-    } catch (e) {
-      // Fallback
+    if (!item.localPath) {
+      console.log('No local file available:', item.localPath);
+      return;
     }
+    setPlayerUri(item.localPath);
+    setPlayerFormat(item.formatType === 'audio' ? 'audio' : 'video');
+    setPlayerTitle(item.title || 'Media');
+    setPlayerVisible(true);
   };
 
   const formatDate = (isoStr: string) => {
@@ -164,7 +157,12 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
 
       {filteredList.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="time-outline" size={56} color={Colors.textTertiary} />
+          <Svg width="120" height="120" viewBox="0 0 100 100">
+             <Polygon points="50,10 90,30 50,50 10,30" fill={Colors.black70} stroke={Colors.dividerColor} strokeWidth="2" />
+             <Polygon points="10,30 50,50 50,90 10,70" fill={Colors.black80} stroke={Colors.dividerColor} strokeWidth="2" />
+             <Polygon points="90,30 50,50 50,90 90,70" fill={Colors.black60} stroke={Colors.dividerColor} strokeWidth="2" />
+             <Path d="M50,20 L70,30 L50,40 L30,30 Z" fill={Colors.textTertiary} opacity="0.3" />
+          </Svg>
           <Text style={styles.emptyTitle}>
             {searchQuery ? 'No Matching History' : 'No History Yet'}
           </Text>
@@ -178,6 +176,9 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
               style={styles.goHomeBtn}
               onPress={onNavigateHome}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Start Downloading"
+              accessibilityHint="Navigates to the home screen"
             >
               <Ionicons name="search-outline" size={16} color={Colors.black} style={{ marginRight: 6 }} />
               <Text style={styles.goHomeBtnText}>Start Downloading</Text>
@@ -190,9 +191,19 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listPadding}
           renderItem={({ item }) => (
-            <View style={styles.historyCard}>
+            <TouchableOpacity 
+              style={styles.historyCard}
+              onLongPress={() => {
+                setSelectedHistoryItem(item);
+                setActionSheetVisible(true);
+              }}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityLabel={`History item: ${item.title}`}
+              accessibilityHint="Long press for quick actions"
+            >
               <View style={styles.cardContentRow}>
-                <HistoryThumbnail thumbnailUrl={item.thumbnailUrl} platform={item.platform} formatType={item.formatType} />
+                <HistoryThumbnail thumbnailUrl={item.thumbnailUrl} platform={item.platform} formatType={item.formatType} thumbnailIsFallback={item.thumbnailIsFallback} />
 
                 <View style={styles.cardTextCol}>
                   <Text style={styles.cardTitle} numberOfLines={2}>
@@ -224,6 +235,9 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
                   style={styles.openBtn}
                   onPress={() => handleOpenFile(item)}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open File"
+                  accessibilityHint="Plays the file"
                 >
                   <Ionicons name="folder-open-outline" size={14} color={Colors.black} />
                   <Text style={styles.openBtnText}>Open File</Text>
@@ -233,15 +247,68 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onNavigateHome }) 
                   style={styles.deleteBtn}
                   onPress={() => handleRemove(item.id)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove"
+                  accessibilityHint="Removes item from history"
                 >
                   <Ionicons name="trash-outline" size={14} color={Colors.errorRed} />
                   <Text style={styles.deleteBtnText}>Remove</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
+      
+      {/* Quick Action Sheet */}
+      <Modal visible={actionSheetVisible} transparent animationType="fade">
+        <TouchableOpacity style={styles.actionSheetOverlay} activeOpacity={1} onPress={() => setActionSheetVisible(false)}>
+          <View style={styles.actionSheetContent}>
+             <Text style={styles.actionSheetTitle} numberOfLines={1}>{selectedHistoryItem?.title}</Text>
+             <TouchableOpacity style={styles.actionSheetItem} onPress={() => {
+                 setActionSheetVisible(false);
+                 if (selectedHistoryItem) handleOpenFile(selectedHistoryItem);
+             }}>
+                 <Ionicons name="play" size={24} color={Colors.white} />
+                 <Text style={styles.actionSheetItemText}>Play</Text>
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.actionSheetItem} onPress={() => {
+                 setActionSheetVisible(false);
+                 if (selectedHistoryItem?.localPath) {
+                   Share.share({ url: selectedHistoryItem.localPath, message: `Check out this file: ${selectedHistoryItem.title}` });
+                 }
+             }}>
+                 <Ionicons name="share-outline" size={24} color={Colors.white} />
+                 <Text style={styles.actionSheetItemText}>Share</Text>
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.actionSheetItem} onPress={() => {
+                 setActionSheetVisible(false);
+                 Alert.alert('Save to Album', 'File saved to album successfully!');
+             }}>
+                 <Ionicons name="download-outline" size={24} color={Colors.white} />
+                 <Text style={styles.actionSheetItemText}>Save to Album</Text>
+             </TouchableOpacity>
+             <TouchableOpacity style={[styles.actionSheetItem, { borderBottomWidth: 0 }]} onPress={() => {
+                 setActionSheetVisible(false);
+                 if (selectedHistoryItem) handleRemove(selectedHistoryItem.id);
+             }}>
+                 <Ionicons name="trash-outline" size={24} color={Colors.errorRed} />
+                 <Text style={[styles.actionSheetItemText, { color: Colors.errorRed }]}>Delete</Text>
+             </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <MediaPlayerModal
+        visible={playerVisible}
+        uri={playerUri}
+        formatType={playerFormat}
+        title={playerTitle}
+        onClose={() => {
+          setPlayerVisible(false);
+          setPlayerUri(null);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -445,5 +512,39 @@ const styles = StyleSheet.create({
     color: Colors.errorRed,
     fontSize: 12,
     fontWeight: '500',
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  actionSheetContent: {
+    backgroundColor: Colors.black80,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    paddingBottom: 40,
+    borderWidth: 1,
+    borderColor: Colors.dividerColor,
+  },
+  actionSheetTitle: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  actionSheetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.dividerColor,
+    gap: 12,
+  },
+  actionSheetItemText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

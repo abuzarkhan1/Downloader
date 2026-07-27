@@ -18,7 +18,9 @@ export function setUseMock(mock: boolean) {
 
 export let API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
-  (RNPlatform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000');
+  (__DEV__ 
+    ? (RNPlatform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
+    : 'https://video.marenax.site');
 
 export function setApiBaseUrl(url: string) {
   API_BASE_URL = url;

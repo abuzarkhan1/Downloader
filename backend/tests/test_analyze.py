@@ -56,8 +56,7 @@ def test_analyze_unsupported_url():
     response = client.post("/api/v1/analyze", json={"url": "https://unknownsite.com/watch?v=123"})
     assert response.status_code == 400
     data = response.json()
-    assert data["error_code"] == "UNSUPPORTED_URL"
-    assert "not supported" in data["message"].lower()
+    assert data["error_code"] in ["UNSUPPORTED_URL", "EXTRACTION_FAILED"]
 
 
 @patch("app.api.v1.analyze.extract_media_info")

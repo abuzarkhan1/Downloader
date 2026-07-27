@@ -84,7 +84,7 @@ async def get_download_status(download_job_id: str):
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Download job '{download_job_id}' not found."
+            detail={"error_code": "JOB_NOT_FOUND", "message": f"Download job '{download_job_id}' not found."}
         )
 
     return DownloadStatusResponse(

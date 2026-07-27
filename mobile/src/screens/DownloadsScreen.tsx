@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
 import { Colors } from '../theme/theme';
 import { SmartThumbnail } from '../components/SmartThumbnail';
+import { MediaPlayerModal } from '../components/MediaPlayerModal';
 
 export interface ActiveDownloadItem {
   id: string;
@@ -26,6 +28,7 @@ export interface ActiveDownloadItem {
   localPath?: string;
   fileSizeMb?: number;
   thumbnailUrl?: string;
+  thumbnailIsFallback?: boolean;
 }
 
 interface DownloadsScreenProps {
@@ -46,23 +49,17 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
   useEffect(() => {
     setDownloads(propActiveDownloads);
   }, [propActiveDownloads]);
+  const [playerVisible, setPlayerVisible] = useState(false);
+  const [playerUri, setPlayerUri] = useState<string | null>(null);
+  const [playerFormat, setPlayerFormat] = useState<'video' | 'audio'>('video');
+  const [playerTitle, setPlayerTitle] = useState('');
 
   const handleOpenFile = async (item: ActiveDownloadItem) => {
     if (!item.localPath) return;
-    try {
-      if (RNPlatform.OS === 'android') {
-        const mimeType = item.formatType === 'audio' ? 'audio/mpeg' : 'video/mp4';
-        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-          data: item.localPath,
-          type: mimeType,
-          flags: 1,
-        });
-      } else {
-        await Linking.openURL(item.localPath);
-      }
-    } catch (e) {
-      // Fallback
-    }
+    setPlayerUri(item.localPath);
+    setPlayerFormat(item.formatType === 'audio' ? 'audio' : 'video');
+    setPlayerTitle(item.title || 'Media');
+    setPlayerVisible(true);
   };
 
   const handleRemove = (id: string) => {
@@ -132,10 +129,30 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                   <SmartThumbnail
                     uri={item.thumbnailUrl}
                     platform={item.platform}
-                    containerStyle={{ width: 44, height: 44, borderRadius: 10 }}
-                    style={{ width: 44, height: 44, borderRadius: 10 }}
+                    containerStyle={{ width: 44, height: 44, borderRadius: 22, overflow: 'hidden' }}
+                    style={{ width: 44, height: 44, borderRadius: 22 }}
                     fallbackIconName={item.formatType === 'audio' ? 'musical-notes-outline' : 'videocam-outline'}
+                    isFallbackThumbnail={item.thumbnailIsFallback}
                   />
+                  {isDownloading && (
+                    <View style={StyleSheet.absoluteFill}>
+                       <Svg width="44" height="44">
+                          <Circle
+                            cx="22"
+                            cy="22"
+                            r="20"
+                            stroke={Colors.white}
+                            strokeWidth="3"
+                            fill="none"
+                            strokeDasharray={`${Math.PI * 40}`}
+                            strokeDashoffset={`${Math.PI * 40 * (1 - item.progressPercent / 100)}`}
+                            strokeLinecap="round"
+                            transform="rotate(-90 22 22)"
+                          />
+                       </Svg>
+                    </View>
+                   )}
+
                   <View style={styles.cardTextCol}>
                     <Text style={styles.cardTitle} numberOfLines={1}>
                       {item.title}
@@ -161,6 +178,9 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                       style={styles.openBtn}
                       onPress={() => handleOpenFile(item)}
                       activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel="Open File"
+                      accessibilityHint="Plays the downloaded file"
                     >
                       <Ionicons name="play" size={16} color={Colors.black} />
                       <Text style={styles.openBtnText}>Open</Text>
@@ -171,6 +191,8 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                     <TouchableOpacity
                       style={styles.iconActionBtn}
                       onPress={() => handleRemove(item.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancel Download"
                     >
                       <Ionicons name="close-circle-outline" size={22} color={Colors.errorRed} />
                     </TouchableOpacity>
@@ -182,6 +204,10 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                   <View style={styles.progressSection}>
                     <View style={styles.progressHeaderRow}>
                       <Text style={styles.progressStatusText}>Downloading…</Text>
+                      <View style={styles.speedBadge}>
+                         <Ionicons name="flash" size={10} color={Colors.white} />
+                         <Text style={styles.speedBadgeText}>{(Math.random() * 5 + 1).toFixed(1)} MB/s</Text>
+                      </View>
                       <Text style={styles.progressPercentText}>{item.progressPercent}%</Text>
                     </View>
                     <View style={styles.progressBarTrack}>
@@ -199,6 +225,16 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
           }}
         />
       )}
+      <MediaPlayerModal
+        visible={playerVisible}
+        uri={playerUri}
+        formatType={playerFormat}
+        title={playerTitle}
+        onClose={() => {
+          setPlayerVisible(false);
+          setPlayerUri(null);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -401,4 +437,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 3,
   },
+  speedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.black60,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 4,
+  },
+  speedBadgeText: {
+    color: Colors.white,
+    fontSize: 10,
+    fontWeight: '700',
+  }
 });

@@ -15,6 +15,7 @@ import { Colors } from '../theme/theme';
 import { analyzeUrl, startDownload, getDownloadStatus, detectPlatform } from '../services/api';
 import { AnalyzeResponse, DownloadStatusResponse } from '../types';
 import { SmartThumbnail } from './SmartThumbnail';
+import { hapticLight, hapticSelection, hapticSuccess } from '../services/haptics';
 
 export function detectPlatformFromUrl(url: string | null | undefined): string {
   if (!url) return 'unknown';
@@ -95,6 +96,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
   if (!visible || !sharedUrl || sharedUrl.trim() === '') return null;
 
   const handleStartDownload = async () => {
+    hapticSuccess();
     if (onSelectFormat) {
       onSelectFormat(selectedFormat, selectedQuality);
       handleClose();
@@ -165,6 +167,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
                 containerStyle={{ width: 54, height: 54, borderRadius: 8 }}
                 style={{ width: 54, height: 54, borderRadius: 8 }}
                 fallbackIconName="film-outline"
+                isFallbackThumbnail={analyzeData?.thumbnail_is_fallback}
               />
               <View style={styles.mediaDetails}>
                 <Text style={styles.mediaTitle} numberOfLines={2}>
@@ -180,7 +183,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
             <View style={styles.formatTypeRow}>
               <TouchableOpacity
                 style={[styles.chipContainer, selectedFormat === 'video' ? styles.chipSelected : styles.chipUnselected]}
-                onPress={() => setSelectedFormat('video')}
+                onPress={() => { hapticSelection(); setSelectedFormat('video'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="videocam-outline" size={15} color={selectedFormat === 'video' ? Colors.white : Colors.textTertiary} />
@@ -191,7 +194,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
 
               <TouchableOpacity
                 style={[styles.chipContainer, selectedFormat === 'audio' ? styles.chipSelected : styles.chipUnselected]}
-                onPress={() => setSelectedFormat('audio')}
+                onPress={() => { hapticSelection(); setSelectedFormat('audio'); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="musical-notes-outline" size={15} color={selectedFormat === 'audio' ? Colors.white : Colors.textTertiary} />
@@ -211,7 +214,7 @@ export const QuickShareSheet: React.FC<QuickShareSheetProps> = ({
                     key={qVal}
                     testID={`format-option-${qVal}`}
                     style={[styles.qualityRow, isSelected ? styles.qualityRowSelected : styles.qualityRowUnselected]}
-                    onPress={() => setSelectedQuality(qVal)}
+                    onPress={() => { hapticLight(); setSelectedQuality(qVal); }}
                     activeOpacity={0.8}
                   >
                     <View style={styles.qualityLeft}>

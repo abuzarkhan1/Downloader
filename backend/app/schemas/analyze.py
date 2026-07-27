@@ -12,12 +12,14 @@ class VideoFormat(BaseModel):
     ext: str = Field("mp4", description="File extension")
     filesize_mb: float = Field(..., description="Estimated or actual file size in MB")
     fps: int = Field(30, description="Frames per second")
+    direct_url: Optional[str] = Field(None, description="Direct CDN stream URL")
 
 
 class AudioFormat(BaseModel):
     quality: str = Field("192kbps", description="Audio quality / bitrate (e.g., 128kbps, 192kbps, 320kbps, lossless)")
     ext: str = Field("mp3", description="Audio file extension ('mp3', 'm4a', 'wav')")
     filesize_mb: float = Field(..., description="Estimated or actual file size in MB")
+    direct_url: Optional[str] = Field(None, description="Direct CDN stream URL")
 
 
 class SubtitleOption(BaseModel):
@@ -31,6 +33,7 @@ class AnalyzeResponse(BaseModel):
     platform: str = Field(..., description="Detected platform (youtube|tiktok|instagram|facebook|twitter|vimeo|reddit|web)")
     title: str = Field(..., description="Content title")
     thumbnail: str = Field(..., description="Thumbnail image URL")
+    thumbnail_is_fallback: bool = Field(False, description="Whether the thumbnail is a stock photo fallback")
     duration_seconds: int = Field(..., description="Duration in seconds")
     uploader: str = Field(..., description="Uploader / Channel name")
     video_formats: List[VideoFormat] = Field(default_factory=list)

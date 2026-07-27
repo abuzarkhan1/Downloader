@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -23,10 +24,26 @@ import { QuickShareSheet } from './src/components/QuickShareSheet';
 import { NavigationBar, NavTab } from './src/components/NavigationBar';
 import { getInitialShareUrl, subscribeToShareIntents } from './src/services/shareIntent';
 import { getDisclaimerAcceptedAt } from './src/services/storage';
-import { addHistoryItem } from './src/services/historyStorage';
+import { useHistoryStore } from './src/store/useHistoryStore';
+import { useAppStore } from './src/store/useAppStore';
+import { OnboardingCarousel } from './src/components/OnboardingCarousel';
+import { MiniPlayerBar } from './src/components/MiniPlayerBar';
+import { ThemeSelectorModal } from './src/components/ThemeSelectorModal';
 import { I18nProvider } from './src/i18n/I18nContext';
 
+
+const queryClient = new QueryClient();
+
 export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+}
+
+function AppContent() {
+
   const [showSplash, setShowSplash] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Home');
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -34,15 +51,12 @@ export default function App() {
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeData, setAnalyzeData] = useState<AnalyzeResponse | null>(null);
 
-  // Quick Share Intent state
-  const [quickShareVisible, setQuickShareVisible] = useState(false);
-  const [quickShareUrl, setQuickShareUrl] = useState('');
-
-  // Global custom error modal state
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [errorModalTitle, setErrorModalTitle] = useState('Error');
-  const [errorModalMsg, setErrorModalMsg] = useState('');
-  const [errorModalDetail, setErrorModalDetail] = useState<string | null>(null);
+  const { quickShareVisible, setQuickShareVisible, quickShareUrl, setQuickShareUrl, errorModal, setErrorModal, hasSeenOnboarding, setHasSeenOnboarding } = useAppStore();
+  const { addHistoryItem } = useHistoryStore();
+  
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
+  const [isMiniPlayerVisible, setMiniPlayerVisible] = useState(false); // Example state
+  const [isMiniPlayerPlaying, setMiniPlayerPlaying] = useState(true);
 
   // Check disclaimer acceptance status on app mount
   useEffect(() => {
@@ -103,10 +117,7 @@ export default function App() {
   }, []);
 
   const showError = (title: string, message: string, detail?: string | null) => {
-    setErrorModalTitle(title);
-    setErrorModalMsg(message);
-    setErrorModalDetail(detail || null);
-    setErrorModalVisible(true);
+    setErrorModal(true, title, message, detail);
   };
 
   // Handle link analysis
@@ -338,17 +349,27 @@ export default function App() {
         <ErrorBoundary>
           <View style={styles.container}>
             {showSplash && <SplashScreen onFinished={() => setShowSplash(false)} />}
+            {!hasSeenOnboarding && !showSplash && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]}>
+                <OnboardingCarousel onComplete={() => setHasSeenOnboarding(true)} />
+              </View>
+            )}
             <DisclaimerModal
               visible={!disclaimerAccepted}
               onAccept={() => setDisclaimerAccepted(true)}
             />
+            
+            <ThemeSelectorModal 
+              visible={themeModalVisible} 
+              onClose={() => setThemeModalVisible(false)} 
+            />
 
             <CustomErrorModal
-              visible={errorModalVisible}
-              title={errorModalTitle}
-              message={errorModalMsg}
-              errorDetail={errorModalDetail}
-              onDismiss={() => setErrorModalVisible(false)}
+              visible={errorModal.visible}
+              title={errorModal.title}
+              message={errorModal.message}
+              errorDetail={errorModal.detail}
+              onDismiss={() => setErrorModal(false)}
             />
 
             <QuickShareSheet
@@ -433,6 +454,18 @@ export default function App() {
             {currentScreen === 'History' && (
               <HistoryScreen
                 onNavigateHome={() => setCurrentScreen('Home')}
+              />
+            )}
+
+            {/* Background Audio/Video Playback MiniPlayerBar */}
+            {isMiniPlayerVisible && !showSplash && (
+              <MiniPlayerBar
+                title="Example Media"
+                isPlaying={isMiniPlayerPlaying}
+                onPlayPause={() => setMiniPlayerPlaying(!isMiniPlayerPlaying)}
+                onClose={() => setMiniPlayerVisible(false)}
+                onPress={() => {}}
+                formatType="video"
               />
             )}
 

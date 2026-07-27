@@ -14,6 +14,8 @@ import { AnalyzeResponse, VideoFormat, AudioFormat } from '../types';
 import { useI18n } from '../i18n/I18nContext';
 import { Colors } from '../theme/theme';
 import { SmartThumbnail } from '../components/SmartThumbnail';
+import { hapticLight, hapticSelection, hapticSuccess } from '../services/haptics';
+import { MeshGradientBackground } from '../components/MeshGradientBackground';
 
 interface ResultsScreenProps {
   data: AnalyzeResponse;
@@ -55,6 +57,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   ];
 
   const handleDownloadPress = () => {
+    hapticSuccess();
     if (activeTab === 'video') {
       const selectedFormat = videoFormats[selectedVideoIndex] || videoFormats[0];
       onSelectFormat('video', selectedFormat.quality);
@@ -66,7 +69,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} testID="results-screen">
-      <StatusBar barStyle="light-content" backgroundColor={Colors.black} />
+      <MeshGradientBackground />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Top Header Bar */}
       <View style={styles.headerBar}>
@@ -90,6 +94,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             platform={data.platform}
             resizeMode="cover"
             fallbackText={data.platform ? data.platform.toUpperCase() : 'MEDIA PREVIEW'}
+            isFallbackThumbnail={data.thumbnail_is_fallback}
           />
 
           {/* Platform Badge Overlay */}
@@ -121,7 +126,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
         <View style={styles.tabsBar}>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => setActiveTab('video')}
+            onPress={() => { hapticSelection(); setActiveTab('video'); }}
             activeOpacity={0.8}
             testID="tab-video"
           >
@@ -139,7 +144,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => setActiveTab('audio')}
+            onPress={() => { hapticSelection(); setActiveTab('audio'); }}
             activeOpacity={0.8}
             testID="tab-audio"
           >
@@ -171,7 +176,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   <React.Fragment key={idx}>
                     <TouchableOpacity
                       style={styles.formatRow}
-                      onPress={() => setSelectedVideoIndex(idx)}
+                      onPress={() => { hapticLight(); setSelectedVideoIndex(idx); }}
                       activeOpacity={0.7}
                       testID={`video-format-${fmt.quality}`}
                     >
@@ -207,7 +212,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   <TouchableOpacity
                     key={ext}
                     testID={`audio-format-selector-${ext}`}
-                    onPress={() => setSelectedAudioFormat(ext as any)}
+                    onPress={() => { hapticLight(); setSelectedAudioFormat(ext as any); }}
                     style={styles.formatPill}
                   >
                     <Text style={styles.formatPillText}>{ext.toUpperCase()}</Text>
@@ -220,7 +225,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                   <React.Fragment key={idx}>
                     <TouchableOpacity
                       style={styles.formatRow}
-                      onPress={() => setSelectedAudioBitrate(item.bitrate)}
+                      onPress={() => { hapticLight(); setSelectedAudioBitrate(item.bitrate); }}
                       activeOpacity={0.7}
                       testID={`audio-bitrate-selector-${item.bitrate}`}
                     >
@@ -279,15 +284,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: Colors.black,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.dividerColor,
+    borderBottomColor: Colors.glassBorder,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 0.5,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -295,7 +300,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: Colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   headerRightSpacer: {
     width: 36,
@@ -305,7 +310,7 @@ const styles = StyleSheet.create({
   },
   thumbnailBox: {
     height: 220,
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -325,9 +330,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   formatPill: {
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 0.5,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -363,7 +368,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 0.5,
-    backgroundColor: Colors.dividerColor,
+    backgroundColor: Colors.glassBorder,
   },
   tabsBar: {
     height: 48,
@@ -388,7 +393,7 @@ const styles = StyleSheet.create({
   },
   verticalDivider: {
     width: 0.5,
-    backgroundColor: Colors.dividerColor,
+    backgroundColor: Colors.glassBorder,
   },
   indicatorRow: {
     flexDirection: 'row',
@@ -401,7 +406,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   indicatorInactive: {
-    backgroundColor: Colors.dividerColor,
+    backgroundColor: Colors.glassBorder,
   },
   contentSection: {
     paddingHorizontal: 20,
@@ -431,7 +436,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: Colors.dividerLight,
+    borderColor: Colors.glassBorderHighlight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -463,7 +468,7 @@ const styles = StyleSheet.create({
   },
   rowDivider: {
     height: 0.5,
-    backgroundColor: Colors.dividerColor,
+    backgroundColor: Colors.glassBorder,
   },
   downloadButton: {
     height: 52,

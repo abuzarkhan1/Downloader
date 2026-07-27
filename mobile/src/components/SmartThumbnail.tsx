@@ -21,16 +21,10 @@ export interface SmartThumbnailProps {
   resizeMode?: 'cover' | 'contain' | 'center' | 'stretch';
   fallbackIconName?: keyof typeof Ionicons.glyphMap;
   fallbackText?: string;
+  isFallbackThumbnail?: boolean;
 }
 
-const PLATFORM_FALLBACK_IMAGES: Record<string, string> = {
-  youtube: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80',
-  tiktok: 'https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=80',
-  instagram: 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=800&q=80',
-  facebook: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&q=80',
-  twitter: 'https://images.unsplash.com/photo-1611605698323-b1e992d3777f?w=800&q=80',
-  default: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80',
-};
+
 
 export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({
   uri,
@@ -41,6 +35,7 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({
   resizeMode = 'cover',
   fallbackIconName = 'play-circle-outline',
   fallbackText,
+  isFallbackThumbnail = false,
 }) => {
   const [candidates, setCandidates] = useState<string[]>([]);
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -71,22 +66,18 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({
       }
     }
 
-    if (extractedYtId) {
-      list.push(`https://img.youtube.com/vi/${extractedYtId}/maxresdefault.jpg`);
-      list.push(`https://i.ytimg.com/vi/${extractedYtId}/hqdefault.jpg`);
-      list.push(`https://img.youtube.com/vi/${extractedYtId}/hqdefault.jpg`);
-      list.push(`https://i.ytimg.com/vi/${extractedYtId}/mqdefault.jpg`);
-    }
-
-    if (formattedUri && !list.includes(formattedUri)) {
+    if (formattedUri) {
       list.push(formattedUri);
     }
 
-    // Platform unsplash fallback
-    const platformLower = (platform || '').toLowerCase();
-    const fallbackImg = PLATFORM_FALLBACK_IMAGES[platformLower] || PLATFORM_FALLBACK_IMAGES['default'];
-    if (!list.includes(fallbackImg)) {
-      list.push(fallbackImg);
+    if (extractedYtId) {
+      const hq = `https://i.ytimg.com/vi/${extractedYtId}/hqdefault.jpg`;
+      const maxres = `https://img.youtube.com/vi/${extractedYtId}/maxresdefault.jpg`;
+      const mq = `https://i.ytimg.com/vi/${extractedYtId}/mqdefault.jpg`;
+      
+      if (!list.includes(hq)) list.push(hq);
+      if (!list.includes(maxres)) list.push(maxres);
+      if (!list.includes(mq)) list.push(mq);
     }
 
     setCandidates(list);
@@ -112,8 +103,9 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {currentUri && !hasAllFailed && (
+      {!isFallbackThumbnail && currentUri && !hasAllFailed && (
         <Image
+          key={currentUri}
           source={{ uri: currentUri }}
           style={[styles.image, style]}
           resizeMode={resizeMode}
@@ -124,13 +116,13 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({
         />
       )}
 
-      {isLoading && !hasAllFailed && (
+      {!isFallbackThumbnail && isLoading && !hasAllFailed && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="small" color={Colors.white} />
         </View>
       )}
 
-      {hasAllFailed && (
+      {(isFallbackThumbnail || hasAllFailed) && (
         <View style={styles.fallbackContainer}>
           <Ionicons name={fallbackIconName} size={36} color={Colors.textSecondary} />
           {fallbackText && <Text style={styles.fallbackText}>{fallbackText}</Text>}

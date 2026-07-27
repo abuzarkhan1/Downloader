@@ -60,11 +60,12 @@ def _format_video_qualities(formats: List[Dict[str, Any]], duration: int) -> Lis
                 est_br = bitrate_map.get(height, 2000)
                 filesize_mb = round((est_br * 1000 / 8 * max(duration, 1)) / (1024 * 1024), 1)
 
-        valid_formats.append((height, quality_label, filesize_mb, fps))
+        direct_url = f.get("url")
+        valid_formats.append((height, quality_label, filesize_mb, fps, direct_url))
 
     valid_formats.sort(key=lambda x: (x[0], x[3], x[2]), reverse=True)
 
-    for height, quality_label, filesize_mb, fps in valid_formats:
+    for height, quality_label, filesize_mb, fps, direct_url in valid_formats:
         if quality_label not in qualities_seen:
             qualities_seen.add(quality_label)
             result.append(
@@ -73,6 +74,7 @@ def _format_video_qualities(formats: List[Dict[str, Any]], duration: int) -> Lis
                     ext="mp4",
                     filesize_mb=max(filesize_mb, 0.5),
                     fps=fps,
+                    direct_url=direct_url,
                 )
             )
 
@@ -110,6 +112,12 @@ def _format_audio_qualities(formats: List[Dict[str, Any]], duration: int) -> Lis
     """Generates audio format options for MP3 (128, 192, 320 kbps), M4A (128, 192, 256 kbps), and WAV."""
     dur = max(duration, 1)
 
+    best_audio_url = None
+    for f in sorted(formats, key=lambda x: x.get('abr') or 0, reverse=True):
+        if f.get('vcodec') == 'none' and f.get('url'):
+            best_audio_url = f.get('url')
+            break
+
     specs = [
         ("mp3", "128kbps", round((16000 * dur) / (1024 * 1024), 1)),
         ("mp3", "192kbps", round((24000 * dur) / (1024 * 1024), 1)),
@@ -125,6 +133,7 @@ def _format_audio_qualities(formats: List[Dict[str, Any]], duration: int) -> Lis
             quality=quality,
             ext=ext,
             filesize_mb=max(filesize_mb, 0.5),
+            direct_url=best_audio_url,
         )
         for ext, quality, filesize_mb in specs
     ]
@@ -239,20 +248,26 @@ def extract_media_info(url: str, platform: str, remove_watermark: bool = True) -
         elif thumbnail and "i.ytimg.com" in thumbnail and "?sqp=" in thumbnail:
             thumbnail = thumbnail.split("?")[0]
 
+        thumbnail_is_fallback = False
         # Ensure thumbnail is never empty by providing high quality platform fallback image URLs
         if not thumbnail or not isinstance(thumbnail, str) or not thumbnail.strip():
             if platform == "youtube" and video_id:
                 thumbnail = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
             elif platform == "tiktok":
                 thumbnail = "https://images.unsplash.com/photo-1616469829941-c7200edec809?w=800&q=80"
+                thumbnail_is_fallback = True
             elif platform == "instagram":
                 thumbnail = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80"
+                thumbnail_is_fallback = True
             elif platform == "facebook":
                 thumbnail = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                thumbnail_is_fallback = True
             elif platform == "twitter":
                 thumbnail = "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=80"
+                thumbnail_is_fallback = True
             else:
                 thumbnail = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
+                thumbnail_is_fallback = True
 
         dur_raw = info.get("duration")
         duration = 0
@@ -305,6 +320,7 @@ def extract_media_info(url: str, platform: str, remove_watermark: bool = True) -
             "platform": platform,
             "title": title,
             "thumbnail": thumbnail,
+            "thumbnail_is_fallback": thumbnail_is_fallback,
             "duration_seconds": duration,
             "uploader": uploader,
             "video_formats": video_formats,
@@ -317,23 +333,35 @@ def extract_media_info(url: str, platform: str, remove_watermark: bool = True) -
         cleaned_msg = clean_error_message(str(e))
         err_msg = cleaned_msg.lower()
 
-        if any(term in err_msg for term in ["private", "login", "requires authentication", "members-only", "sign in"]):
+        if any(term in err_msg for term in ["private", "login", "requires authentication", "members-only", "sign in", "empty media response", "accessible in your browser without being logged-in"]):
             raise ExtractionError(
                 error_code="PRIVATE_CONTENT",
                 message="This content is private or requires authentication and cannot be accessed.",
                 status_code=403,
             )
-        elif "too many requests" in err_msg or "rate limit" in err_msg or "429" in err_msg:
+        elif any(term in err_msg for term in ["too many requests", "rate limit", "429", "bot", "blocked", "captcha"]):
             raise ExtractionError(
                 error_code="RATE_LIMITED",
-                message="Platform rate limit reached. Please try again later.",
+                message="Platform rate limit or IP block reached. Please try again later.",
                 status_code=429,
             )
-        elif any(term in err_msg for term in ["bot", "blocked", "captcha"]):
+        elif any(term in err_msg for term in ["deleted", "unavailable", "not found", "404", "video is no longer available"]):
             raise ExtractionError(
-                error_code="PLATFORM_BLOCKED",
-                message="Request was blocked by the platform.",
-                status_code=422,
+                error_code="MEDIA_NOT_FOUND",
+                message="The requested media was deleted or is unavailable.",
+                status_code=404,
+            )
+        elif any(term in err_msg for term in ["timeout", "timed out", "unreachable", "name or service not known", "network is unreachable", "504"]):
+            raise ExtractionError(
+                error_code="UPSTREAM_TIMEOUT",
+                message="Network timeout or upstream server is unreachable.",
+                status_code=504,
+            )
+        elif any(term in err_msg for term in ["500", "502", "corrupt", "internal server error", "bad gateway"]):
+            raise ExtractionError(
+                error_code="UPSTREAM_ERROR",
+                message="Upstream platform error or corrupt response.",
+                status_code=502,
             )
         elif "unsupported url" in err_msg or "is not a valid url" in err_msg or "invalid url" in err_msg:
             raise ExtractionError(
@@ -347,6 +375,16 @@ def extract_media_info(url: str, platform: str, remove_watermark: bool = True) -
                 message=cleaned_msg if cleaned_msg else "Unable to extract media info from the provided URL.",
                 status_code=400,
             )
+    except yt_dlp.utils.ExtractorError as e:
+        raise ExtractionError(error_code="EXTRACTION_FAILED", message=str(e), status_code=400)
+    except yt_dlp.utils.GeoRestrictedError as e:
+        raise ExtractionError(error_code="PRIVATE_CONTENT", message=str(e), status_code=403)
+    except yt_dlp.utils.UnavailableVideoError as e:
+        raise ExtractionError(error_code="MEDIA_NOT_FOUND", message=str(e), status_code=404)
+    except yt_dlp.utils.UserNotLive as e:
+        raise ExtractionError(error_code="MEDIA_NOT_FOUND", message=str(e), status_code=404)
+    except yt_dlp.utils.PostProcessingError as e:
+        raise ExtractionError(error_code="CONVERSION_FAILED", message=str(e), status_code=500)
     except ExtractionError:
         raise
     except Exception as e:

@@ -16,13 +16,15 @@ Thumbs.db
 .env.staging
 
 # Python & FastAPI Backend
-backend/.venv/
-backend/venv/
-backend/env/
-backend/__pycache__/
-backend/*/__pycache__/
-backend/*/*/__pycache__/
-backend/*/*/*/__pycache__/
+backend/.venv*/
+backend/venv*/
+backend/env*/
+.venv*/
+*.venv*
+venv/
+env/
+__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/

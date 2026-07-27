@@ -5,6 +5,7 @@ export interface VideoFormat {
   ext: string;
   filesize_mb: number;
   fps?: number;
+  direct_url?: string;
 }
 
 export interface AudioFormat {
@@ -12,6 +13,7 @@ export interface AudioFormat {
   ext: string;
   filesize_mb: number;
   bitrate?: string;
+  direct_url?: string;
 }
 
 export interface SubtitleTrack {
@@ -25,6 +27,7 @@ export interface AnalyzeResponse {
   platform: Platform;
   title: string;
   thumbnail: string;
+  thumbnail_is_fallback?: boolean;
   duration_seconds: number;
   uploader: string;
   video_formats: VideoFormat[];

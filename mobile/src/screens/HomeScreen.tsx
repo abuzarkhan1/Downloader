@@ -17,6 +17,12 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useI18n } from '../i18n/I18nContext';
 import { Colors } from '../theme/theme';
+import { useAppStore } from '../store/useAppStore';
+import { hapticLight, hapticSelection, hapticSuccess } from '../services/haptics';
+import { ClipboardToast } from '../components/ClipboardToast';
+import { MeshGradientBackground } from '../components/MeshGradientBackground';
+import { AutoCleanUrlChip } from '../components/AutoCleanUrlChip';
+import { ErgonomicFab } from '../components/ErgonomicFab';
 
 interface HomeScreenProps {
   onAnalyze: (url: string, removeWatermark?: boolean) => void;
@@ -26,17 +32,38 @@ interface HomeScreenProps {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectUrl, error }) => {
   const { language, setLanguage, t, isRTL } = useI18n();
+  let store: any = null;
+  try {
+    if (typeof useAppStore === 'function') {
+      store = useAppStore();
+    }
+  } catch (e) {
+    store = null;
+  }
 
   // Mode: single vs batch
-  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [isBatchMode, setIsBatchModeLocal] = useState(store ? store.batchMode : false);
+
+  // Features
+  const [removeWatermark, setRemoveWatermarkLocal] = useState(store ? store.noWatermark : true);
+
+  const setIsBatchMode = (val: boolean) => {
+    setIsBatchModeLocal(val);
+    if (store?.setBatchMode) store.setBatchMode(val);
+  };
+
+  const setRemoveWatermark = (val: boolean) => {
+    setRemoveWatermarkLocal(val);
+    if (store?.setNoWatermark) store.setNoWatermark(val);
+  };
 
   // Single URL state
   const [urlText, setUrlText] = useState('');
   const [batchText, setBatchText] = useState('');
 
   // Features
-  const [removeWatermark, setRemoveWatermark] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [detectedUrl, setDetectedUrl] = useState<string | null>(null);
 
   // Clipboard auto-detect tracking
   const lastDetectedRef = React.useRef<string | null>(null);
@@ -51,6 +78,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
           trimmed !== lastDetectedRef.current
         ) {
           lastDetectedRef.current = trimmed;
+          setDetectedUrl(trimmed);
           if (onAutoDetectUrl) {
             onAutoDetectUrl(trimmed);
           }
@@ -76,6 +104,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
   }, []);
 
   const handlePaste = async () => {
+    hapticLight();
     try {
       const text = await Clipboard.getStringAsync();
       if (text) {
@@ -94,6 +123,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
   const handleAnalyzeClick = () => {
     const target = isBatchMode ? batchText.trim() : urlText.trim();
     if (target && !isAnalyzing) {
+      hapticSuccess();
       setIsAnalyzing(true);
       onAnalyze(target, removeWatermark);
       setTimeout(() => setIsAnalyzing(false), 2000);
@@ -102,10 +132,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
 
   const currentInputText = isBatchMode ? batchText : urlText;
   const isInputValid = currentInputText.trim().length > 0;
+  
+  // Dummy stripped URL for AutoCleanUrlChip demo
+  const dummyStrippedUrl = currentInputText.split('?')[0] || currentInputText;
 
   return (
     <SafeAreaView style={styles.container} testID="home-screen">
-      <StatusBar barStyle="light-content" backgroundColor={Colors.black} />
+      <MeshGradientBackground />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <ClipboardToast 
+        url={detectedUrl || ''} 
+        visible={!!detectedUrl} 
+        onPaste={() => {
+          hapticLight();
+          if (detectedUrl) {
+            if (isBatchMode) {
+               setBatchText(prev => prev.trim() ? `${prev}\n${detectedUrl}` : detectedUrl);
+            } else {
+               setUrlText(detectedUrl);
+            }
+          }
+        }} 
+        onDismiss={() => setDetectedUrl(null)} 
+      />
 
       {/* Top Header Bar */}
       <View style={styles.headerBar}>
@@ -218,9 +267,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
             )}
 
             {currentInputText.length > 0 && (
-              <Text style={styles.charCountText}>
-                {currentInputText.length} characters
-              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                <AutoCleanUrlChip 
+                  originalUrl={currentInputText} 
+                  cleanedUrl={dummyStrippedUrl}
+                  onPress={() => !isBatchMode && setUrlText(dummyStrippedUrl)}
+                />
+                <Text style={styles.charCountText}>
+                  {currentInputText.length} characters
+                </Text>
+              </View>
             )}
           </View>
 
@@ -234,7 +290,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
                 styles.toggleChip,
                 isBatchMode ? styles.toggleChipSelected : styles.toggleChipUnselected,
               ]}
-              onPress={() => setIsBatchMode(!isBatchMode)}
+              onPress={() => { hapticSelection(); setIsBatchMode(!isBatchMode); }}
               activeOpacity={0.8}
               testID="mode-tab-batch"
             >
@@ -254,7 +310,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
                 styles.toggleChip,
                 removeWatermark ? styles.toggleChipSelected : styles.toggleChipUnselected,
               ]}
-              onPress={() => setRemoveWatermark(!removeWatermark)}
+              onPress={() => { hapticSelection(); setRemoveWatermark(!removeWatermark); }}
               activeOpacity={0.8}
               testID="home-watermark-switch"
               {...({
@@ -328,6 +384,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onAnalyze, onAutoDetectU
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ErgonomicFab onPress={handlePaste} />
     </SafeAreaView>
   );
 };
@@ -345,7 +403,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: Colors.black,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.dividerColor,
+    borderBottomColor: Colors.glassBorder,
   },
   headerTitleGroup: {
     flexDirection: 'row',
@@ -356,7 +414,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: Colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -367,9 +425,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 0.5,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
   },
   langButtonText: {
     fontSize: 12,
@@ -379,11 +437,11 @@ const styles = StyleSheet.create({
   clipboardBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.dividerColor,
+    borderBottomColor: Colors.glassBorder,
   },
   clipboardTextContainer: {
     flex: 1,
@@ -443,10 +501,10 @@ const styles = StyleSheet.create({
   spacer28: { height: 28 },
   spacer32: { height: 32 },
   urlInputCard: {
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     padding: 16,
     gap: 10,
   },
@@ -475,10 +533,10 @@ const styles = StyleSheet.create({
   singleInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.black70,
+    backgroundColor: Colors.surfaceInput,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     paddingHorizontal: 12,
   },
   singleTextInput: {
@@ -488,10 +546,10 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   batchTextInput: {
-    backgroundColor: Colors.black70,
+    backgroundColor: Colors.surfaceInput,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     padding: 12,
     fontSize: 14,
     color: Colors.textPrimary,
@@ -502,7 +560,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.black70,
+    backgroundColor: Colors.surfaceInput,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -535,14 +593,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   toggleChipSelected: {
-    backgroundColor: Colors.black60,
+    backgroundColor: Colors.surfaceOverlay,
     borderWidth: 1,
-    borderColor: Colors.dividerLight,
+    borderColor: Colors.glassBorderHighlight,
   },
   toggleChipUnselected: {
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 0.5,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
   },
   toggleChipText: {
     fontSize: 13,
@@ -563,7 +621,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   analyzeButtonDisabled: {
-    backgroundColor: Colors.black70,
+    backgroundColor: Colors.surfaceInput,
   },
   buttonContentRow: {
     flexDirection: 'row',
@@ -615,9 +673,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   platformBadge: {
-    backgroundColor: Colors.black80,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 0.5,
-    borderColor: Colors.dividerColor,
+    borderColor: Colors.glassBorder,
     borderRadius: 6,
     paddingHorizontal: 9,
     paddingVertical: 4,

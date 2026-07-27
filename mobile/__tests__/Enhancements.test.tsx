@@ -29,9 +29,20 @@ const mockData: AnalyzeResponse = {
   ],
 };
 
+import { useAppStore } from '../src/store/useAppStore';
+
 describe('Mobile App Enhancements', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useAppStore.setState({
+      activeNavTab: 'Home',
+      batchMode: false,
+      noWatermark: true,
+      quickShareVisible: false,
+      quickShareUrl: null,
+      disclaimerVisible: false,
+      errorModal: { visible: false, title: 'Error', message: '', detail: null },
+    });
   });
 
   test('1. Multi-Language (i18n) Support & Language Selector Toggle', async () => {
