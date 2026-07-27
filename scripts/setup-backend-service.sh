@@ -31,7 +31,15 @@ SERVICE_NAME="video-downloader-backend"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 PORT=8000
 
-# ─── Step 1: Install system dependencies ──────────────────────
+# ─── Step 1: Wait for apt/dpkg locks ─────────────────────────
+log "Waiting for apt/dpkg locks to be free (unattended-upgrades may be running)..."
+while fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock >/dev/null 2>&1; do
+  echo -e "${YELLOW}  [WAIT] apt is locked by another process — waiting 5s...${NC}"
+  sleep 5
+done
+success "apt lock is free."
+
+# ─── Step 2: Install system dependencies ──────────────────────
 log "Updating apt package list..."
 apt-get update -qq
 
