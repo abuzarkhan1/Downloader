@@ -58,7 +58,13 @@ cp "$USER_CONFIG" "$ETC_CONFIG"
 chown root:root "$ETC_CONFIG"
 
 log "Creating DNS route for $DOMAIN on tunnel $TUNNEL_NAME..."
-if cloudflared tunnel route dns "$TUNNEL_NAME" "$DOMAIN"; then
+if [ -n "$SUDO_USER" ]; then
+  USER_RUN_AS="$SUDO_USER"
+else
+  USER_RUN_AS="$(whoami)"
+fi
+
+if sudo -u "$USER_RUN_AS" cloudflared tunnel route dns "$TUNNEL_NAME" "$DOMAIN"; then
     success "DNS route created successfully"
 else
     warn "DNS route creation failed or already exists"
