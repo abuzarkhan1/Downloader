@@ -22,7 +22,12 @@ fi
 DOMAIN="video.marenax.site"
 SERVICE="http://localhost:8000"
 TUNNEL_NAME="oldarena"
-USER_CONFIG="/home/arenax/.cloudflared/config.yml"
+if [ -n "$SUDO_USER" ]; then
+  USER_HOME=$(eval echo "~$SUDO_USER")
+else
+  USER_HOME=$(eval echo "~$(whoami)")
+fi
+USER_CONFIG="$USER_HOME/.cloudflared/config.yml"
 ETC_CONFIG="/etc/cloudflared/config.yml"
 
 log "Checking user config at $USER_CONFIG"

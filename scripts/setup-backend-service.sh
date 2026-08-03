@@ -22,9 +22,13 @@ if [ "$EUID" -ne 0 ]; then
   error "Please run as root: sudo bash scripts/setup-backend-service.sh"
 fi
 
-USER="arenax"
-GROUP="arenax"
-PROJECT_DIR="/home/arenax/videodwonloader"
+if [ -n "$SUDO_USER" ]; then
+  USER="$SUDO_USER"
+else
+  USER=$(whoami)
+fi
+GROUP="$USER"
+PROJECT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
 BACKEND_DIR="$PROJECT_DIR/backend"
 VENV_DIR="$BACKEND_DIR/.venv312"
 SERVICE_NAME="video-downloader-backend"
